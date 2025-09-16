@@ -1,0 +1,12 @@
+# Referencias
+- Docker Engine Ubuntu / Compose plugin:
+  - https://docs.docker.com/engine/install/ubuntu/
+  - https://docs.docker.com/compose/install/linux/
+- Superset Docker Compose (non-dev) y Docker builds (lean/dev):
+  - https://superset.apache.org/docs/6.0.0/installation/docker-compose/
+  - https://superset.apache.org/docs/installation/docker-builds/
+- Releases (6.0.0rc1): https://github.com/apache/superset/releases
+- Configuración (SECRET_KEY / superset_config.py): https://superset.apache.org/docs/configuration/configuring-superset/
+- Dockerfile (Node 20): https://github.com/apache/superset/blob/master/Dockerfile
+- ECharts v6 (matrix): https://echarts.apache.org/handbook/en/basics/release-note/v6-feature/
+- Drivers/requirements-local.txt: https://preset.io/blog/2020-05-18-install-db-drivers/

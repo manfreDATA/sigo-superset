@@ -1,0 +1,34 @@
+version: "3.7"
+
+services:
+  superset:
+    env_file:
+      - ./.env
+    ports:
+      - "${HOST_PORT:-8088}:8088"
+    environment:
+      - SUPERSET_SECRET_KEY=${SUPERSET_SECRET_KEY}
+      - SUPERSET_CONFIG_PATH=/app/pythonpath/superset_config_docker.py
+      - PYTHONPATH=/app/pythonpath
+    volumes:
+      - ./docker/pythonpath_dev:/app/pythonpath
+
+  superset-worker:
+    env_file:
+      - ./.env
+    environment:
+      - SUPERSET_SECRET_KEY=${SUPERSET_SECRET_KEY}
+      - SUPERSET_CONFIG_PATH=/app/pythonpath/superset_config_docker.py
+      - PYTHONPATH=/app/pythonpath
+    volumes:
+      - ./docker/pythonpath_dev:/app/pythonpath
+
+  superset-worker-beat:
+    env_file:
+      - ./.env
+    environment:
+      - SUPERSET_SECRET_KEY=${SUPERSET_SECRET_KEY}
+      - SUPERSET_CONFIG_PATH=/app/pythonpath/superset_config_docker.py
+      - PYTHONPATH=/app/pythonpath
+    volumes:
+      - ./docker/pythonpath_dev:/app/pythonpath
