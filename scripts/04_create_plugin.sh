@@ -3,11 +3,10 @@ set -euo pipefail
 source "$(dirname "$0")/lib.sh"
 : "${SUPERSET_ROOT:?}"
 : "${ECHARTS_TARGET_MAJOR:=6}"
-: "${REACT_TARGET_MAJOR:=17}"
 
 cd "${SUPERSET_ROOT}"
 
-info "Creando skeleton de plugin ECharts extras (5 charts)…"
+info "Creando skeleton de plugin ECharts extras (5 charts) con peerDependencies React 17…"
 mkdir -p scripts
 cat > scripts/create_echarts_extras.sh <<'EOS'
 #!/usr/bin/env bash
@@ -32,7 +31,8 @@ cat > "$PLUGIN_DIR/package.json" <<'EOP'
   "peerDependencies": {
     "@superset-ui/core": ">=0.20.0",
     "@superset-ui/chart-controls": ">=0.20.0",
-    "react": ">=16.14",
+    "react": "^17",
+    "react-dom": "^17",
     "echarts": ">=5.0.0"
   },
   "devDependencies": { "typescript": "^5.4.0" }
@@ -255,24 +255,57 @@ EOS
 chmod +x scripts/create_echarts_extras.sh
 bash scripts/create_echarts_extras.sh
 
+# Construir el plugin (esto NO instala React, solo Typescript local del plugin)
 cd plugins/superset-plugin-chart-echarts-extras
-npm install
+npm install --no-audit --no-fund
 npm run build
 
+# Instalar el plugin en el frontend sin tocar dependencies del root
 cd "${SUPERSET_ROOT}/superset-frontend"
-# Instala el plugin en el frontend
-npm i -S ../plugins/superset-plugin-chart-echarts-extras
 
-info "Forzando dependencia 'echarts@^${ECHARTS_TARGET_MAJOR}' en superset-frontend…"
-if node -e "let p=require('./package.json'); p.dependencies=p.dependencies||{}; p.dependencies.echarts='^${ECHARTS_TARGET_MAJOR}.0.0'; require('fs').writeFileSync('package.json', JSON.stringify(p,null,2)); console.log('ok');"; then
-  if npm install; then
-    success "ECharts ^${ECHARTS_TARGET_MAJOR} instalado."
-  else
-    warn "Fallo al instalar ECharts ^${ECHARTS_TARGET_MAJOR}. Probando fallback a ^5…"
-    node -e "let p=require('./package.json'); p.dependencies.echarts='^5.4.0'; require('fs').writeFileSync('package.json', JSON.stringify(p,null,2));"
-    npm install
-    success "ECharts ^5 instalado como fallback."
-  fi
-fi
+# Reasegurar React 17 (idempotente) ANTES de cualquier npm install
+node <<'NODE'
+const fs = require('fs'); const p='package.json';
+const pkg = JSON.parse(fs.readFileSync(p,'utf8'));
+pkg.dependencies = pkg.dependencies || {};
+pkg.devDependencies = pkg.devDependencies || {};
+pkg.dependencies['react'] = '17.0.2';
+pkg.dependencies['react-dom'] = '17.0.2';
+pkg.overrides = Object.assign({}, pkg.overrides, {
+  'react': '17.0.2',
+  'react-dom': '17.0.2',
+  '@types/react': '^17',
+  '@types/react-dom': '^17'
+});
+fs.writeFileSync(p, JSON.stringify(pkg,null,2));
+console.log('✅ React 17 reafirmado (dependencies + overrides).');
+NODE
 
-success "Plugin creado y dependencias listas."
+# Instalar el plugin sin guardar en package.json para no recalcular árbol
+npm install --no-save ../plugins/superset-plugin-chart-echarts-extras --no-audit --no-fund --legacy-peer-deps
+
+# Asegurar ECharts mayor seleccionado y reinstalar dependencias respetando overrides
+node <<NODE
+const fs = require('fs'); const p='package.json';
+const pkg = JSON.parse(fs.readFileSync(p,'utf8'));
+pkg.dependencies = pkg.dependencies || {};
+pkg.dependencies.echarts = pkg.dependencies.echarts || '^${ECHARTS_TARGET_MAJOR}.0.0';
+fs.writeFileSync(p, JSON.stringify(pkg,null,2));
+console.log('ℹ️ Dependencia echarts fijada:', pkg.dependencies.echarts);
+NODE
+
+npm install --no-audit --no-fund --legacy-peer-deps
+
+# Verificación dura de React 17 (package.json + instalado)
+node <<'NODE'
+const pkg = require('./package.json');
+const assert = (cond, msg) => { if(!cond){ console.error('✖',msg); process.exit(1);} };
+assert(pkg.dependencies?.react === '17.0.2', 'package.json: react debe ser 17.0.2');
+assert(pkg.dependencies?.['react-dom'] === '17.0.2', 'package.json: react-dom debe ser 17.0.2');
+const reactVersion = require('react/package.json').version;
+const reactDomVersion = require('react-dom/package.json').version;
+assert(reactVersion.startsWith('17.'), 'node_modules: react debe ser 17.x');
+assert(reactDomVersion.startsWith('17.'), 'node_modules: react-dom debe ser 17.x');
+console.log('✅ Verificación React 17 OK:', reactVersion, reactDomVersion);
+NODE
+success "Plugin creado, instalado y React 17 preservado."
