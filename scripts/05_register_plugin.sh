@@ -5,7 +5,7 @@ source "$(dirname "$0")/lib.sh"
 
 cd "${SUPERSET_ROOT}/superset-frontend"
 
-# Registrar el plugin en MainPreset.js
+# Registro en MainPreset.js
 node <<'NODE'
 const fs = require('fs'), p='src/visualizations/presets/MainPreset.js';
 let s = fs.readFileSync(p,'utf8');
@@ -31,16 +31,18 @@ if(!s.includes("superset-plugin-chart-echarts-extras")){
   console.log("ℹ️ Ya estaba registrado.");
 }
 NODE
-# Verificación dura de React 17 (no permitir upgrades accidentales)
+
+# Verificación dura de React 17 post-registro (por si algo tocó node_modules)
 node <<'NODE'
 const pkg = require('./package.json');
 const assert = (c,m)=>{ if(!c){ console.error('✖',m); process.exit(1);} };
 assert(pkg.dependencies?.react === '17.0.2', 'package.json: react debe mantenerse 17.0.2');
 assert(pkg.dependencies?.['react-dom'] === '17.0.2', 'package.json: react-dom debe mantenerse 17.0.2');
-const reactVersion = require('react/package.json').version;
-const reactDomVersion = require('react-dom/package.json').version;
-assert(reactVersion.startsWith('17.'), 'node_modules: react debe ser 17.x');
-assert(reactDomVersion.startsWith('17.'), 'node_modules: react-dom debe ser 17.x');
-console.log('✅ React 17 verificado tras registro:', reactVersion, reactDomVersion);
+const rv = require('react/package.json').version;
+const rdv = require('react-dom/package.json').version;
+assert(rv.startsWith('17.'), 'node_modules: react debe ser 17.x');
+assert(rdv.startsWith('17.'), 'node_modules: react-dom debe ser 17.x');
+console.log('✅ React 17 verificado tras registro:', rv, rdv);
 NODE
+
 success "Plugin registrado y React 17 preservado."

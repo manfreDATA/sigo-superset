@@ -32,4 +32,14 @@ fi
 # Copia override para non-dev
 cp -f "${BASE_DIR}/config/docker-compose-non-dev.override.yml" "${SUPERSET_ROOT}/docker-compose-non-dev.override.yml"
 
+# Refuerzo opcional: asegurar .npmrc en superset-frontend
+if [[ -f "${SUPERSET_ROOT}/superset-frontend/package.json" ]]; then
+  cat > "${SUPERSET_ROOT}/superset-frontend/.npmrc" <<'NPMRC'
+legacy-peer-deps=true
+audit=false
+fund=false
+NPMRC
+fi
+
+
 success "Archivos de configuración listos (.env, superset_config_docker.py, requirements-local.txt, override compose)."
