@@ -12,7 +12,7 @@ fi
 info "Fijando React 17 en superset-frontend (dependencies + overrides) y configurando .npmrc…"
 cd "${FRONTEND_DIR}"
 
-# 1) package.json: dependencies + overrides
+# 1) package.json: dependencies + devDependencies + overrides ($alias)
 node <<'NODE'
 const fs = require('fs');
 const p = 'package.json';
@@ -20,19 +20,28 @@ const pkg = JSON.parse(fs.readFileSync(p,'utf8'));
 
 pkg.dependencies = pkg.dependencies || {};
 pkg.devDependencies = pkg.devDependencies || {};
+pkg.overrides = pkg.overrides || {};
+
+// Runtime en 17
 pkg.dependencies['react'] = '17.0.2';
 pkg.dependencies['react-dom'] = '17.0.2';
 
-pkg.overrides = Object.assign({}, pkg.overrides, {
-  'react': '17.0.2',
-  'react-dom': '17.0.2',
-  '@types/react': '^17',
-  '@types/react-dom': '^17'
-});
+// Types en 17 como dependencias *directas* (evita conflictos de TS)
+const desiredTypesReact = '17.0.83';   // ajustable si cierras en otra 17.x
+const desiredTypesReactDom = '17.0.20';// idem
+pkg.devDependencies['@types/react'] = desiredTypesReact;
+pkg.devDependencies['@types/react-dom'] = desiredTypesReactDom;
+
+// Overrides: usa $alias para NO chocar con dependencias directas (evita EOVERRIDE)
+pkg.overrides['react'] = '$react';
+pkg.overrides['react-dom'] = '$react-dom';
+pkg.overrides['@types/react'] = '$@types/react';
+pkg.overrides['@types/react-dom'] = '$@types/react-dom';
 
 fs.writeFileSync(p, JSON.stringify(pkg, null, 2));
-console.log('✅ package.json actualizado: react/react-dom 17.0.2 + overrides');
+console.log('✅ React 17 + types 17 fijados; overrides con $alias listos.');
 NODE
+
 
 # 2) .npmrc local para evitar recálculo estricto de peers y silenciar auditorías
 cat > .npmrc <<'NPMRC'

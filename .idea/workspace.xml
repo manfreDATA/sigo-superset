@@ -4,8 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="6e664c11-39a0-483a-a12d-cf7922f58682" name="Changes" comment="enforce react 17 for superset compatibility">
-      <change beforePath="$PROJECT_DIR$/scripts/03b_pin_react17.sh" beforeDir="false" afterPath="$PROJECT_DIR$/scripts/03b_pin_react17.sh" afterDir="false" />
+    <list default="true" id="6e664c11-39a0-483a-a12d-cf7922f58682" name="Changes" comment="enforce react 17 again">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -71,7 +71,7 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1758051681230</updated>
-      <workItem from="1758051682428" duration="2868000" />
+      <workItem from="1758051682428" duration="4154000" />
     </task>
     <task id="LOCAL-00001" summary="enforce react 17 for superset compatibility">
       <option name="closed" value="true" />
@@ -81,7 +81,15 @@
       <option name="project" value="LOCAL" />
       <updated>1758055162995</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="enforce react 17 again">
+      <option name="closed" value="true" />
+      <created>1758056920132</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1758056920132</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -89,6 +97,7 @@
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="enforce react 17 for superset compatibility" />
-    <option name="LAST_COMMIT_MESSAGE" value="enforce react 17 for superset compatibility" />
+    <MESSAGE value="enforce react 17 again" />
+    <option name="LAST_COMMIT_MESSAGE" value="enforce react 17 again" />
   </component>
 </project>
