@@ -4,7 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="6e664c11-39a0-483a-a12d-cf7922f58682" name="Changes" comment="fix plugin build thumbnail png-loading errors" />
+    <list default="true" id="6e664c11-39a0-483a-a12d-cf7922f58682" name="Changes" comment="fix plugin build Behavior.InteractiveChart error">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/scripts/04_create_plugin.sh" beforeDir="false" afterPath="$PROJECT_DIR$/scripts/04_create_plugin.sh" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -71,7 +74,7 @@
       <option name="presentableId" value="Default" />
       <updated>1758051681230</updated>
       <workItem from="1758051682428" duration="6060000" />
-      <workItem from="1758119586478" duration="1260000" />
+      <workItem from="1758119586478" duration="2550000" />
     </task>
     <task id="LOCAL-00001" summary="enforce react 17 for superset compatibility">
       <option name="closed" value="true" />
@@ -113,7 +116,15 @@
       <option name="project" value="LOCAL" />
       <updated>1758120192441</updated>
     </task>
-    <option name="localTasksCounter" value="6" />
+    <task id="LOCAL-00006" summary="fix plugin build Behavior.InteractiveChart error">
+      <option name="closed" value="true" />
+      <created>1758121108948</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1758121108948</updated>
+    </task>
+    <option name="localTasksCounter" value="7" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -125,6 +136,7 @@
     <MESSAGE value="enforce react 17 without overrides" />
     <MESSAGE value="enforce react 17 with fixes" />
     <MESSAGE value="fix plugin build thumbnail png-loading errors" />
-    <option name="LAST_COMMIT_MESSAGE" value="fix plugin build thumbnail png-loading errors" />
+    <MESSAGE value="fix plugin build Behavior.InteractiveChart error" />
+    <option name="LAST_COMMIT_MESSAGE" value="fix plugin build Behavior.InteractiveChart error" />
   </component>
 </project>

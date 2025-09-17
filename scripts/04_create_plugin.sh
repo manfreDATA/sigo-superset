@@ -84,7 +84,7 @@ cat > "${PLUGIN_DIR}/package.json" <<'EOP'
 }
 EOP
 
-# tsconfig del plugin
+# tsconfig del plugin (incluye 'node' por compatibilidad; no es obligatorio con dynamic import)
 cat > "${PLUGIN_DIR}/tsconfig.json" <<'JSON'
 {
   "compilerOptions": {
@@ -96,7 +96,7 @@ cat > "${PLUGIN_DIR}/tsconfig.json" <<'JSON'
     "moduleResolution": "Node",
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "types": ["react", "react-dom"],
+    "types": ["react", "react-dom", "node"],
     "outDir": "lib",
     "rootDir": "src"
   },
@@ -197,23 +197,42 @@ TS
 # 1.4) Archivos fuente por subplugin (Chart.tsx / transformProps.ts / index.ts con metadata completa)
 # -------------------------------------------------------------------
 
-# shared/EchartBase.tsx
+# shared/EchartBase.tsx  (✅ Opción A: EChartsCoreOption con build modular)
 cat > "${SRC_DIR}/shared/EchartBase.tsx" <<'TSX'
 import React, { useEffect, useRef } from 'react';
 import * as echarts from 'echarts/core';
+import type { EChartsCoreOption } from 'echarts';
 import { BarChart } from 'echarts/charts';
 import { GridComponent, TooltipComponent, LegendComponent } from 'echarts/components';
 import { CanvasRenderer } from 'echarts/renderers';
+
 echarts.use([BarChart, GridComponent, TooltipComponent, LegendComponent, CanvasRenderer]);
-export default function EchartBase({ height, width, option }:
- { height: number; width: number; option: echarts.EChartsOption }) {
+
+export default function EchartBase({
+  height,
+  width,
+  option,
+}: {
+  height: number;
+  width: number;
+  option: EChartsCoreOption;
+}) {
   const ref = useRef<HTMLDivElement>(null);
   const chart = useRef<echarts.EChartsType>();
-  useEffect(() => { if (ref.current) chart.current = echarts.init(ref.current); return () => chart.current?.dispose(); }, []);
-  useEffect(() => { chart.current?.setOption(option, true); }, [option]);
+
+  useEffect(() => {
+    if (ref.current) chart.current = echarts.init(ref.current);
+    return () => chart.current?.dispose();
+  }, []);
+
+  useEffect(() => {
+    chart.current?.setOption(option, true);
+  }, [option]);
+
   return <div ref={ref} style={{ height, width }} />;
 }
 TSX
+
 # shared/controlPanelBarLike.ts
 cat > "${SRC_DIR}/shared/controlPanelBarLike.ts" <<'TS'
 import { t } from '@superset-ui/core';
@@ -445,6 +464,7 @@ export default class EchartsBarNegativePlugin extends ChartPlugin {
   }
 }
 TS
+
 # ===== matrixMiniBarGeo =====
 cat > "${SRC_DIR}/matrixMiniBarGeo/transformProps.ts" <<'TS'
 import { ChartProps } from '@superset-ui/core';
@@ -460,19 +480,37 @@ export default function transformProps({ height, width, queriesData }: ChartProp
 }
 TS
 
+# ✅ Chart.tsx con dynamic import (sin require)
 cat > "${SRC_DIR}/matrixMiniBarGeo/Chart.tsx" <<'TSX'
-import React from 'react';
+import React, { useEffect } from 'react';
 import * as echarts from 'echarts/core';
 import { BarChart, ScatterChart } from 'echarts/charts';
 import { GridComponent, TooltipComponent, LegendComponent, GeoComponent } from 'echarts/components';
 import { CanvasRenderer } from 'echarts/renderers';
-let MatrixComponent: any;
-try { const comps = require('echarts/components'); MatrixComponent = comps?.MatrixComponent; } catch { MatrixComponent = undefined; }
-const toUse: any[] = [BarChart, ScatterChart, GridComponent, TooltipComponent, LegendComponent, GeoComponent, CanvasRenderer];
-if (MatrixComponent) toUse.push(MatrixComponent);
-echarts.use(toUse);
 import EchartBase from '../shared/EchartBase';
+
+// Registrar componentes estándar
+echarts.use([BarChart, ScatterChart, GridComponent, TooltipComponent, LegendComponent, GeoComponent, CanvasRenderer]);
+
 export default function Chart({ height, width, echartOptions }: any) {
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const comps = await import('echarts/components');
+        const MC = (comps as any)?.MatrixComponent;
+        if (!cancelled && MC) {
+          echarts.use([MC]); // registrar MatrixComponent si existe (ECharts v6+)
+        }
+      } catch {
+        // Si no existe MatrixComponent en esta versión, lo ignoramos.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   return <EchartBase height={height} width={width} option={echartOptions} />;
 }
 TSX
@@ -520,6 +558,7 @@ pkg.devDependencies = pkg.devDependencies || {};
 
 if (!pkg.devDependencies['@types/react']) pkg.devDependencies['@types/react'] = '^17.0.0';
 if (!pkg.devDependencies['@types/react-dom']) pkg.devDependencies['@types/react-dom'] = '^17.0.0';
+if (!pkg.devDependencies['@types/node']) pkg.devDependencies['@types/node'] = '^20.0.0';
 if (!pkg.devDependencies['echarts']) pkg.devDependencies['echarts'] = '^5.4.0';
 if (!pkg.devDependencies['@superset-ui/core']) pkg.devDependencies['@superset-ui/core'] = '*';
 if (!pkg.devDependencies['@superset-ui/chart-controls']) pkg.devDependencies['@superset-ui/chart-controls'] = '*';
