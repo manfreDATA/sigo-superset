@@ -4,6 +4,7 @@ Este paquete despliega **Apache Superset 6.0.0rc1** en `/root/superset` usando D
 
 ## Uso rápido
 ```bash
+git clone https://github.com/manfreDATA/sigo-superset.git sigo-echarts
 cd /root/sigo-echarts
 sudo chmod +x run_all.sh scripts/*.sh
 sudo ./run_all.sh
