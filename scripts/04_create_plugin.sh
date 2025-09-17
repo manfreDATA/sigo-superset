@@ -2,8 +2,11 @@
 set -euo pipefail
 # shellcheck disable=SC1091
 
-# Utilidades de logging si existen
+# ──────────────────────────────────────────────────────────────────────────────
+# Logging helpers
+# ──────────────────────────────────────────────────────────────────────────────
 if [[ -f "$(dirname "$0")/lib.sh" ]]; then
+  # Opcional: si tienes un lib.sh propio
   source "$(dirname "$0")/lib.sh"
 else
   info()    { printf "\e[34m➤ %s\e[0m\n" "$*"; }
@@ -11,61 +14,56 @@ else
   error()   { printf "\e[31m✖ %s\e[0m\n" "$*"; }
   success() { printf "\e[32m✔ %s\e[0m\n" "$*"; }
 fi
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Requisitos
+# ──────────────────────────────────────────────────────────────────────────────
 : "${SUPERSET_ROOT:?Debes definir SUPERSET_ROOT (p.ej.: /root/superset)}"
-: "${ECHARTS_TARGET_MAJOR:=6}"
+: "${ECHARTS_TARGET_MAJOR:=6}"   # Mayor de ECharts que deseas forzar en superset-frontend
 
 cd "${SUPERSET_ROOT}"
 
-# ------------------------------------------------------------------
-# Helpers para imágenes oficiales y placeholders
-# ------------------------------------------------------------------
+# ──────────────────────────────────────────────────────────────────────────────
+# Helpers de imágenes (placeholders) y copia desde plugins oficiales
+# ──────────────────────────────────────────────────────────────────────────────
 png_placeholder_b64='iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFxgJd0nS0NQAAAABJRU5ErkJggg=='
 
-write_placeholder_png() {
-  # $1 = ruta destino
+write_placeholder_png() {  # $1 destino
   printf '%s' "$png_placeholder_b64" | base64 -d > "$1" || true
 }
 
-copy_first() {
-  # $1 srcDir $2 baseName (sin extensión) $3 dstPath (con nombre final)
+copy_first() {             # $1 srcDir $2 baseName (sin ext) $3 dstPath (con nombre final)
   local s="$1/$2.png"; [[ -f "$s" ]] && { cp -f "$s" "$3"; return 0; }
   s="$1/$2.jpg";       [[ -f "$s" ]] && { cp -f "$s" "$3"; return 0; }
   return 1
 }
 
-ensure_img_set() {
-  # $1 srcDir $2 dstDir
+ensure_img_set() {        # $1 srcDir $2 dstDir
   mkdir -p "$2"
-  # thumbnail
   if ! copy_first "$1" "thumbnail" "$2/thumbnail.png"; then
     write_placeholder_png "$2/thumbnail.png"
   fi
-  # example1
   if ! copy_first "$1" "example1" "$2/example1.png"; then
     cp -f "$2/thumbnail.png" "$2/example1.png" 2>/dev/null || write_placeholder_png "$2/example1.png"
   fi
-  # example2 (opcional)
-  if ! copy_first "$1" "example2" "$2/example2.png"; then
-    :
-  fi
+  if ! copy_first "$1" "example2" "$2/example2.png"; then :; fi
 }
 
-# Mapeo a imágenes oficiales del repo de Superset (si existen)
 SRC_ECHARTS_BASE="${SUPERSET_ROOT}/superset-frontend/plugins/plugin-chart-echarts/src"
 SRC_PIE="${SRC_ECHARTS_BASE}/Pie/images"
 SRC_HIST="${SRC_ECHARTS_BASE}/Histogram/images"
 SRC_WATERFALL="${SRC_ECHARTS_BASE}/Waterfall/images"
 SRC_TREEMAP="${SRC_ECHARTS_BASE}/Treemap/images"
 
-# ------------------------------------------------------------------
-# 1) CREAR/ACTUALIZAR SKELETON DEL PLUGIN (idempotente)
-# ------------------------------------------------------------------
-info "Creando/actualizando skeleton del plugin (idempotente)…"
+# ──────────────────────────────────────────────────────────────────────────────
+# 1) Skeleton del plugin (idempotente)
+# ──────────────────────────────────────────────────────────────────────────────
+info "Creando/actualizando skeleton del plugin…"
 PLUGIN_DIR="plugins/superset-plugin-chart-echarts-extras"
 SRC_DIR="${PLUGIN_DIR}/src"
 mkdir -p "${SRC_DIR}"/{shared,datasetLink,datasetSeriesLayoutBy,barYStack,barNegative,matrixMiniBarGeo}
 
-# package.json del plugin (peers compatibles con React 17)
+# package.json (añadimos plugin-chart-echarts como devDependency para compilar el import)
 cat > "${PLUGIN_DIR}/package.json" <<'EOP'
 {
   "name": "superset-plugin-chart-echarts-extras",
@@ -86,12 +84,19 @@ cat > "${PLUGIN_DIR}/package.json" <<'EOP'
     "echarts": ">=5.0.0"
   },
   "devDependencies": {
-    "typescript": "^5.4.0"
+    "typescript": "^5.4.0",
+    "@types/react": "^17.0.0",
+    "@types/react-dom": "^17.0.0",
+    "@types/node": "^20.0.0",
+    "echarts": "^5.4.0",
+    "@superset-ui/core": "*",
+    "@superset-ui/chart-controls": "*",
+    "@superset-ui/plugin-chart-echarts": "*"
   }
 }
 EOP
 
-# tsconfig del plugin
+# tsconfig
 cat > "${PLUGIN_DIR}/tsconfig.json" <<'JSON'
 {
   "compilerOptions": {
@@ -110,7 +115,8 @@ cat > "${PLUGIN_DIR}/tsconfig.json" <<'JSON'
   "include": ["src/**/*"]
 }
 JSON
-# Barrel principal
+
+# Barrel
 cat > "${SRC_DIR}/index.ts" <<'TS'
 export { default as EchartsDatasetLinkPlugin } from './datasetLink';
 export { default as EchartsDatasetSeriesLayoutByPlugin } from './datasetSeriesLayoutBy';
@@ -119,9 +125,7 @@ export { default as EchartsBarNegativePlugin } from './barNegative';
 export { default as EchartsMatrixMiniBarGeoPlugin } from './matrixMiniBarGeo';
 TS
 
-# ------------------------------------------------------------------
-# 1.1) Thumbnails SVG (fallbacks) compartidos
-# ------------------------------------------------------------------
+# Thumbnails SVG (fallbacks compartidos)
 mkdir -p "${SRC_DIR}/shared"
 cat > "${SRC_DIR}/shared/thumbnails.ts" <<'TS'
 // Thumbnails en data-URI SVG (fallbacks)
@@ -174,18 +178,14 @@ export const thumbMatrixMiniBarGeo = svg(`
 `, 160, 100);
 TS
 
-# ------------------------------------------------------------------
-# 1.2) Copiar imágenes oficiales a cada subplugin (si existen)
-# ------------------------------------------------------------------
+# Copia de imágenes oficiales (si existen)
 ensure_img_set "${SRC_PIE}"        "${SRC_DIR}/datasetLink/images"
 ensure_img_set "${SRC_HIST}"       "${SRC_DIR}/datasetSeriesLayoutBy/images"
 ensure_img_set "${SRC_HIST}"       "${SRC_DIR}/barYStack/images"
 ensure_img_set "${SRC_WATERFALL}"  "${SRC_DIR}/barNegative/images"
 ensure_img_set "${SRC_TREEMAP}"    "${SRC_DIR}/matrixMiniBarGeo/images"
 
-# ------------------------------------------------------------------
-# 1.3) Declaraciones TS para imports de imágenes (*.png/*.jpg/*.svg)
-# ------------------------------------------------------------------
+# Typings para imágenes
 mkdir -p "${SRC_DIR}/types"
 cat > "${SRC_DIR}/types/images.d.ts" <<'TS'
 declare module '*.png'  { const src: string; export default src; }
@@ -194,9 +194,7 @@ declare module '*.jpeg' { const src: string; export default src; }
 declare module '*.svg'  { const src: string; export default src; }
 TS
 
-# ------------------------------------------------------------------
-# 1.4) Fuentes por subplugin + shared/EchartBase.tsx
-# ------------------------------------------------------------------
+# shared/EchartBase.tsx
 cat > "${SRC_DIR}/shared/EchartBase.tsx" <<'TSX'
 import React, { useEffect, useRef } from 'react';
 import * as echarts from 'echarts/core';
@@ -232,15 +230,12 @@ export default function EchartBase({
 }
 TSX
 
-# ------------------------------------------------------------------
-# shared/controlPanelBarLike.ts (IMPORTA legendSection del plugin ECharts)
-# ------------------------------------------------------------------
-# Permite sobreescribir la subruta de importación si tu versión publica lib/ o esm/.
-: "${ECHARTS_CONTROLS_IMPORT:=@superset-ui/plugin-chart-echarts/controls}"
-cat > "${SRC_DIR}/shared/controlPanelBarLike.ts" <<TS
+# shared/controlPanelBarLike.ts
+# Usamos un marcador __ECHARTS_CONTROLS_IMPORT__ que luego auto‑detectaremos y sustituiremos.
+cat > "${SRC_DIR}/shared/controlPanelBarLike.ts" <<'TS'
 import { t } from '@superset-ui/core';
 import { ControlPanelConfig, sharedControls } from '@superset-ui/chart-controls';
-import { legendSection } from '${ECHARTS_CONTROLS_IMPORT}';
+import { legendSection } from '__ECHARTS_CONTROLS_IMPORT__';
 
 const config: ControlPanelConfig = {
   controlPanelSections: [
@@ -271,7 +266,6 @@ TS
 # ===== datasetLink =====
 cat > "${SRC_DIR}/datasetLink/transformProps.ts" <<'TS'
 import { ChartProps } from '@superset-ui/core';
-
 export default function transformProps({ height, width, queriesData }: ChartProps) {
   const data = (queriesData?.[0]?.data ?? []) as Array<Record<string, any>>;
   const columns = Object.keys(data[0] ?? {});
@@ -291,7 +285,6 @@ TS
 cat > "${SRC_DIR}/datasetLink/Chart.tsx" <<'TSX'
 import React from 'react';
 import EchartBase from '../shared/EchartBase';
-
 export default function Chart({ height, width, echartOptions }: any) {
   return <EchartBase height={height} width={width} option={echartOptions} />;
 }
@@ -301,7 +294,6 @@ cat > "${SRC_DIR}/datasetLink/index.ts" <<'TS'
 import { Behavior, ChartMetadata, ChartPlugin, t } from '@superset-ui/core';
 import controlPanel from '../shared/controlPanelBarLike';
 import transformProps from './transformProps';
-import { thumbDatasetLink as fallbackThumb } from '../shared/thumbnails';
 import thumbnail from './images/thumbnail.png';
 import example1 from './images/example1.png';
 
@@ -314,11 +306,9 @@ export default class EchartsDatasetLinkPlugin extends ChartPlugin {
         thumbnail,
         credits: ['https://echarts.apache.org'],
         category: t('Data Transformation'),
-        description: t(
-          'Uses ECharts dataset linkage to map a tabular dataset directly to series, reducing manual mapping and enabling quick comparisons.',
-        ),
+        description: t('Uses ECharts dataset linkage to map a tabular dataset directly to series, reducing manual mapping and enabling quick comparisons.'),
         tags: ['ECharts', t('Dataset'), t('Comparison'), t('Featured')],
-        exampleGallery: [{ url: example1, fallbackThumb }],
+        exampleGallery: [{ url: example1 }],
         behaviors: [Behavior.InteractiveChart],
       }),
       transformProps,
@@ -331,7 +321,6 @@ TS
 # ===== datasetSeriesLayoutBy =====
 cat > "${SRC_DIR}/datasetSeriesLayoutBy/transformProps.ts" <<'TS'
 import { ChartProps } from '@superset-ui/core';
-
 export default function transformProps({ height, width, queriesData }: ChartProps) {
   const data = (queriesData?.[0]?.data ?? []) as Array<Record<string, any>>;
   const cols = Object.keys(data[0] ?? {});
@@ -359,17 +348,14 @@ TS
 cat > "${SRC_DIR}/datasetSeriesLayoutBy/Chart.tsx" <<'TSX'
 import React from 'react';
 import EchartBase from '../shared/EchartBase';
-
 export default function Chart({ height, width, echartOptions }: any) {
   return <EchartBase height={height} width={width} option={echartOptions} />;
 }
 TSX
-
 cat > "${SRC_DIR}/datasetSeriesLayoutBy/index.ts" <<'TS'
 import { Behavior, ChartMetadata, ChartPlugin, t } from '@superset-ui/core';
 import controlPanel from '../shared/controlPanelBarLike';
 import transformProps from './transformProps';
-import { thumbDatasetSeriesLayout as fallbackThumb } from '../shared/thumbnails';
 import thumbnail from './images/thumbnail.png';
 import example1 from './images/example1.png';
 import example2 from './images/example2.png';
@@ -383,11 +369,9 @@ export default class EchartsDatasetSeriesLayoutByPlugin extends ChartPlugin {
         thumbnail,
         credits: ['https://echarts.apache.org'],
         category: t('Data Transformation'),
-        description: t(
-          'Explores ECharts seriesLayoutBy to flip dataset orientation across multiple panes, useful to compare series-by-row vs series-by-column.',
-        ),
+        description: t('Explores ECharts seriesLayoutBy to flip dataset orientation across multiple panes, useful to compare series-by-row vs series-by-column.'),
         tags: ['ECharts', t('Dataset'), t('Layout'), t('Multi‑panel')],
-        exampleGallery: [{ url: example1, fallbackThumb }, { url: example2, fallbackThumb }],
+        exampleGallery: [{ url: example1 }, { url: example2 }],
         behaviors: [Behavior.InteractiveChart],
       }),
       transformProps,
@@ -400,12 +384,11 @@ TS
 # ===== barYStack =====
 cat > "${SRC_DIR}/barYStack/transformProps.ts" <<'TS'
 import { ChartProps } from '@superset-ui/core';
-
 export default function transformProps({ height, width, queriesData }: ChartProps) {
   const rows = (queriesData?.[0]?.data ?? []) as Array<Record<string, any>>;
   if (!rows.length) return { height, width, echartOptions: { series: [] } };
   const yLabels = rows.map(r => r.y ?? r.category ?? r.label ?? '');
-  const keys = Object.keys(rows[0]).filter(k => !['y', 'category', 'label'].includes(k));
+  const keys = Object.keys(rows[0]).filter(k => !['y','category','label'].includes(k));
   const option = {
     tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
     legend: {},
@@ -420,7 +403,6 @@ TS
 cat > "${SRC_DIR}/barYStack/Chart.tsx" <<'TSX'
 import React from 'react';
 import EchartBase from '../shared/EchartBase';
-
 export default function Chart({ height, width, echartOptions }: any) {
   return <EchartBase height={height} width={width} option={echartOptions} />;
 }
@@ -430,7 +412,6 @@ cat > "${SRC_DIR}/barYStack/index.ts" <<'TS'
 import { Behavior, ChartMetadata, ChartPlugin, t } from '@superset-ui/core';
 import controlPanel from '../shared/controlPanelBarLike';
 import transformProps from './transformProps';
-import { thumbBarStackY as fallbackThumb } from '../shared/thumbnails';
 import thumbnail from './images/thumbnail.png';
 import example1 from './images/example1.png';
 
@@ -443,11 +424,9 @@ export default class EchartsBarYStackPlugin extends ChartPlugin {
         thumbnail,
         credits: ['https://echarts.apache.org'],
         category: t('Comparison'),
-        description: t(
-          'Stacked bars with categories on the Y axis, highlighting composition across groups. Ideal to compare parts-to-whole across categories.',
-        ),
+        description: t('Stacked bars with categories on the Y axis, highlighting composition across groups. Ideal to compare parts-to-whole across categories.'),
         tags: ['ECharts', t('Bar'), t('Stacked'), t('Composition')],
-        exampleGallery: [{ url: example1, fallbackThumb }],
+        exampleGallery: [{ url: example1 }],
         behaviors: [Behavior.InteractiveChart],
       }),
       transformProps,
@@ -460,12 +439,11 @@ TS
 # ===== barNegative =====
 cat > "${SRC_DIR}/barNegative/transformProps.ts" <<'TS'
 import { ChartProps } from '@superset-ui/core';
-
 export default function transformProps({ height, width, queriesData }: ChartProps) {
   const rows = (queriesData?.[0]?.data ?? []) as Array<Record<string, any>>;
   if (!rows.length) return { height, width, echartOptions: { series: [] } };
   const yLabels = rows.map(r => r.y ?? r.category ?? r.label ?? '');
-  const keys = Object.keys(rows[0]).filter(k => !['y', 'category', 'label'].includes(k));
+  const keys = Object.keys(rows[0]).filter(k => !['y','category','label'].includes(k));
   const option = {
     tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
     legend: { data: keys },
@@ -480,17 +458,14 @@ TS
 cat > "${SRC_DIR}/barNegative/Chart.tsx" <<'TSX'
 import React from 'react';
 import EchartBase from '../shared/EchartBase';
-
 export default function Chart({ height, width, echartOptions }: any) {
   return <EchartBase height={height} width={width} option={echartOptions} />;
 }
 TSX
-
 cat > "${SRC_DIR}/barNegative/index.ts" <<'TS'
 import { Behavior, ChartMetadata, ChartPlugin, t } from '@superset-ui/core';
 import controlPanel from '../shared/controlPanelBarLike';
 import transformProps from './transformProps';
-import { thumbBarPositiveNegative as fallbackThumb } from '../shared/thumbnails';
 import thumbnail from './images/thumbnail.png';
 import example1 from './images/example1.png';
 
@@ -503,11 +478,9 @@ export default class EchartsBarNegativePlugin extends ChartPlugin {
         thumbnail,
         credits: ['https://echarts.apache.org'],
         category: t('Comparison'),
-        description: t(
-          'Bidirectional bar chart to compare gains and losses around a zero baseline. Great for profit/loss breakdowns and net effects.',
-        ),
+        description: t('Bidirectional bar chart to compare gains and losses around a zero baseline. Great for profit/loss breakdowns and net effects.'),
         tags: ['ECharts', t('Bar'), t('Diverging'), t('Business')],
-        exampleGallery: [{ url: example1, fallbackThumb }],
+        exampleGallery: [{ url: example1 }],
         behaviors: [Behavior.InteractiveChart],
       }),
       transformProps,
@@ -520,16 +493,15 @@ TS
 # ===== matrixMiniBarGeo =====
 cat > "${SRC_DIR}/matrixMiniBarGeo/transformProps.ts" <<'TS'
 import { ChartProps } from '@superset-ui/core';
-
 export default function transformProps({ height, width, queriesData }: ChartProps) {
   const rows = (queriesData?.[0]?.data ?? []) as Array<Record<string, any>>;
-  const headers = ['Region', 'A', 'B', 'Geo'];
+  const headers = ['Region','A','B','Geo'];
   const option: any = {
     matrix: {
       x: { levelSize: 40, data: headers.map(h => ({ value: h })), label: { fontWeight: 'bold' } },
       y: { data: rows.map(() => '_'), show: false },
       body: { data: [] },
-      top: 25,
+      top: 25
     },
     legend: {},
     tooltip: {},
@@ -542,6 +514,7 @@ export default function transformProps({ height, width, queriesData }: ChartProp
   return { height, width, echartOptions: option };
 }
 TS
+
 cat > "${SRC_DIR}/matrixMiniBarGeo/Chart.tsx" <<'TSX'
 import React, { useEffect } from 'react';
 import * as echarts from 'echarts/core';
@@ -549,8 +522,6 @@ import { BarChart, ScatterChart } from 'echarts/charts';
 import { GridComponent, TooltipComponent, LegendComponent, GeoComponent } from 'echarts/components';
 import { CanvasRenderer } from 'echarts/renderers';
 import EchartBase from '../shared/EchartBase';
-
-// Registrar componentes estándar
 echarts.use([BarChart, ScatterChart, GridComponent, TooltipComponent, LegendComponent, GeoComponent, CanvasRenderer]);
 
 export default function Chart({ height, width, echartOptions }: any) {
@@ -560,16 +531,10 @@ export default function Chart({ height, width, echartOptions }: any) {
       try {
         const comps = await import('echarts/components');
         const MC = (comps as any)?.MatrixComponent;
-        if (!cancelled && MC) {
-          echarts.use([MC]); // Registrar MatrixComponent si existe (ECharts v6+)
-        }
-      } catch {
-        // Si no existe MatrixComponent en esta versión, lo ignoramos.
-      }
+        if (!cancelled && MC) { echarts.use([MC]); }
+      } catch { /* ignorar */ }
     })();
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, []);
   return <EchartBase height={height} width={width} option={echartOptions} />;
 }
@@ -579,7 +544,6 @@ cat > "${SRC_DIR}/matrixMiniBarGeo/index.ts" <<'TS'
 import { Behavior, ChartMetadata, ChartPlugin, t } from '@superset-ui/core';
 import controlPanel from '../shared/controlPanelBarLike';
 import transformProps from './transformProps';
-import { thumbMatrixMiniBarGeo as fallbackThumb } from '../shared/thumbnails';
 import thumbnail from './images/thumbnail.png';
 import example1 from './images/example1.png';
 
@@ -592,11 +556,9 @@ export default class EchartsMatrixMiniBarGeoPlugin extends ChartPlugin {
         thumbnail,
         credits: ['https://echarts.apache.org'],
         category: t('Geospatial'),
-        description: t(
-          'Experimental matrix layout combining mini‑bars with a geographic frame (ECharts v6 feature). Useful for dense, small‑multiple overviews.',
-        ),
+        description: t('Experimental matrix layout combining mini‑bars with a geographic frame (ECharts v6 feature). Useful for dense, small‑multiple overviews.'),
         tags: ['ECharts', t('Matrix'), t('Geo'), t('Experimental')],
-        exampleGallery: [{ url: example1, fallbackThumb }],
+        exampleGallery: [{ url: example1 }],
         behaviors: [Behavior.InteractiveChart],
       }),
       transformProps,
@@ -608,39 +570,52 @@ TS
 
 info "Fuentes + metadata + imágenes listos."
 
-# ------------------------------------------------------------------
-# 2) DEV DEPENDENCIES del PLUGIN (para compilar con TypeScript)
-# ------------------------------------------------------------------
-info "Asegurando devDependencies del plugin para compilación con TypeScript…"
-node <<'NODE'
-const fs = require('fs');
-const p = 'plugins/superset-plugin-chart-echarts-extras/package.json';
-const pkg = JSON.parse(fs.readFileSync(p, 'utf8'));
-pkg.devDependencies = pkg.devDependencies || {};
-if (!pkg.devDependencies['@types/react']) pkg.devDependencies['@types/react'] = '^17.0.0';
-if (!pkg.devDependencies['@types/react-dom']) pkg.devDependencies['@types/react-dom'] = '^17.0.0';
-if (!pkg.devDependencies['@types/node']) pkg.devDependencies['@types/node'] = '^20.0.0';
-if (!pkg.devDependencies['echarts']) pkg.devDependencies['echarts'] = '^5.4.0';
-if (!pkg.devDependencies['@superset-ui/core']) pkg.devDependencies['@superset-ui/core'] = '*';
-if (!pkg.devDependencies['@superset-ui/chart-controls']) pkg.devDependencies['@superset-ui/chart-controls'] = '*';
-if (!pkg.devDependencies['typescript']) pkg.devDependencies['typescript'] = '^5.4.0';
-fs.writeFileSync(p, JSON.stringify(pkg, null, 2));
-console.log('✅ devDependencies listos para el build TS del plugin');
-NODE
-
-# ------------------------------------------------------------------
-# 3) INSTALAR y COMPILAR el PLUGIN
-# ------------------------------------------------------------------
-info "Instalando devDependencies del plugin y compilando (tsc)…"
+# ──────────────────────────────────────────────────────────────────────────────
+# 2) Instalar devDependencies del plugin
+# ──────────────────────────────────────────────────────────────────────────────
+info "Instalando devDependencies del plugin…"
 cd "${PLUGIN_DIR}"
 npm install --legacy-peer-deps --no-audit --no-fund
+
+# ──────────────────────────────────────────────────────────────────────────────
+# 2.1) Auto‑detección de subruta para importar legendSection
+#       Intentamos: controls → lib/controls → esm/controls
+# ──────────────────────────────────────────────────────────────────────────────
+info "Auto‑detectando subruta de '@superset-ui/plugin-chart-echarts' para legendSection…"
+node <<'NODE'
+const fs = require('fs');
+const path = require('path');
+const candidates = [
+  '@superset-ui/plugin-chart-echarts/controls',
+  '@superset-ui/plugin-chart-echarts/lib/controls',
+  '@superset-ui/plugin-chart-echarts/esm/controls',
+];
+let chosen = candidates.find(p => {
+  try { require.resolve(p, { paths: [process.cwd()] }); return true; } catch { return false; }
+});
+if (!chosen) {
+  console.error('✖ No se pudo resolver legendSection desde @superset-ui/plugin-chart-echarts');
+  process.exit(1);
+}
+const file = path.join(process.cwd(), 'src', 'shared', 'controlPanelBarLike.ts');
+let code = fs.readFileSync(file, 'utf8');
+code = code.replace(/'__ECHARTS_CONTROLS_IMPORT__'/g, `'${chosen}'`);
+fs.writeFileSync(file, code, 'utf8');
+console.log('✅ Usando import:', chosen);
+NODE
+
+# ──────────────────────────────────────────────────────────────────────────────
+# 3) Compilar plugin (tsc)
+# ──────────────────────────────────────────────────────────────────────────────
+info "Compilando plugin (tsc)…"
 npm run build
 
-# ------------------------------------------------------------------
-# 4) INSTALAR el PLUGIN en superset-frontend (sin recalcular peers)
-# ------------------------------------------------------------------
+# ──────────────────────────────────────────────────────────────────────────────
+# 4) Instalar el plugin en superset-frontend y fijar ECharts mayor (si aplica)
+# ──────────────────────────────────────────────────────────────────────────────
 cd "${SUPERSET_ROOT}/superset-frontend"
-# Reforzar .npmrc (por si algún entorno no corrió 03b)
+
+# Refuerza .npmrc por si no existe
 if [[ ! -f ".npmrc" ]]; then
   cat > ".npmrc" <<'NPMRC'
 legacy-peer-deps=true
@@ -649,11 +624,12 @@ fund=false
 NPMRC
   info "Creado .npmrc (legacy-peer-deps=true) en superset-frontend."
 fi
+
 info "Instalando el plugin en superset-frontend (sin guardar en package.json)…"
 npm install --no-save ../plugins/superset-plugin-chart-echarts-extras \
   --legacy-peer-deps --no-audit --no-fund
 
-# Fijar echarts mayor si no está definido y reinstalar respetando .npmrc
+# Fijar versión mayor de ECharts si no está definida
 node <<NODE
 const fs = require('fs'); const p='package.json';
 const pkg = JSON.parse(fs.readFileSync(p,'utf8'));
@@ -662,11 +638,12 @@ if(!pkg.dependencies.echarts) pkg.dependencies.echarts = '^' + process.env.ECHAR
 fs.writeFileSync(p, JSON.stringify(pkg,null,2));
 console.log('ℹ️ echarts =', pkg.dependencies.echarts);
 NODE
+
 npm install --no-audit --no-fund
 
-# ------------------------------------------------------------------
-# 5) VERIFICACIONES (React 17 presente en node_modules)
-# ------------------------------------------------------------------
+# ──────────────────────────────────────────────────────────────────────────────
+# 5) Verificación React 17
+# ──────────────────────────────────────────────────────────────────────────────
 info "Verificando React 17 en superset-frontend…"
 node <<'NODE'
 const assert = (c,m)=>{ if(!c){ console.error('✖',m); process.exit(1);} };
@@ -678,4 +655,4 @@ assert(String(rdv).startsWith('17.'), `react-dom no está en 17.x (actual: ${rdv
 console.log('✅ React 17 OK:', rv, rdv);
 NODE
 
-success "Plugin ECharts: fuentes + imágenes oficiales + metadata listos; build e instalación completados."
+success "Plugin ECharts EXTRAS: fuentes + controles avanzados de leyenda importados del plugin oficial; build e instalación completados."
