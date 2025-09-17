@@ -4,8 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="6e664c11-39a0-483a-a12d-cf7922f58682" name="Changes" comment="Se reutiliza la legendSection que el propio plugin expone (incluye show_legend, legendType, legendOrientation, legendMargin con su lógica de visibilidad), tal como está en plugin-chart-echarts/src/controls.tsx del repo oficial">
+    <list default="true" id="6e664c11-39a0-483a-a12d-cf7922f58682" name="Changes" comment="Se elimina el fallbackThumb de los iconos de los plugins">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/scripts/04_create_plugin.sh" beforeDir="false" afterPath="$PROJECT_DIR$/scripts/04_create_plugin.sh" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -73,7 +74,7 @@
       <option name="presentableId" value="Default" />
       <updated>1758051681230</updated>
       <workItem from="1758051682428" duration="6060000" />
-      <workItem from="1758119586478" duration="5288000" />
+      <workItem from="1758119586478" duration="6701000" />
     </task>
     <task id="LOCAL-00001" summary="enforce react 17 for superset compatibility">
       <option name="closed" value="true" />
@@ -139,7 +140,15 @@
       <option name="project" value="LOCAL" />
       <updated>1758131748995</updated>
     </task>
-    <option name="localTasksCounter" value="9" />
+    <task id="LOCAL-00009" summary="Se elimina el fallbackThumb de los iconos de los plugins">
+      <option name="closed" value="true" />
+      <created>1758138589289</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1758138589289</updated>
+    </task>
+    <option name="localTasksCounter" value="10" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -154,6 +163,7 @@
     <MESSAGE value="fix plugin build Behavior.InteractiveChart error" />
     <MESSAGE value="scripts/04_create_plugin.sh completo y actualizado con:&#10;&#10;EchartBase.tsx usando EChartsCoreOption (opción A, build modular de ECharts).&#10;matrixMiniBarGeo/Chart.tsx con dynamic import (sin require), para que no dependas de símbolos de Node.&#10;Resto de mejoras que ya teníamos: thumbnails PNG “oficiales” + fallbacks SVG, images.d.ts, Behavior.InteractiveChart, y build/instalación sin recalcular peers." />
     <MESSAGE value="Se reutiliza la legendSection que el propio plugin expone (incluye show_legend, legendType, legendOrientation, legendMargin con su lógica de visibilidad), tal como está en plugin-chart-echarts/src/controls.tsx del repo oficial" />
-    <option name="LAST_COMMIT_MESSAGE" value="Se reutiliza la legendSection que el propio plugin expone (incluye show_legend, legendType, legendOrientation, legendMargin con su lógica de visibilidad), tal como está en plugin-chart-echarts/src/controls.tsx del repo oficial" />
+    <MESSAGE value="Se elimina el fallbackThumb de los iconos de los plugins" />
+    <option name="LAST_COMMIT_MESSAGE" value="Se elimina el fallbackThumb de los iconos de los plugins" />
   </component>
 </project>

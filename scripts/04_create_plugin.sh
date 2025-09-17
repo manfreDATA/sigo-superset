@@ -6,7 +6,6 @@ set -euo pipefail
 # Logging helpers
 # ──────────────────────────────────────────────────────────────────────────────
 if [[ -f "$(dirname "$0")/lib.sh" ]]; then
-  # Opcional: si tienes un lib.sh propio
   source "$(dirname "$0")/lib.sh"
 else
   info()    { printf "\e[34m➤ %s\e[0m\n" "$*"; }
@@ -14,12 +13,11 @@ else
   error()   { printf "\e[31m✖ %s\e[0m\n" "$*"; }
   success() { printf "\e[32m✔ %s\e[0m\n" "$*"; }
 fi
-
 # ──────────────────────────────────────────────────────────────────────────────
 # Requisitos
 # ──────────────────────────────────────────────────────────────────────────────
 : "${SUPERSET_ROOT:?Debes definir SUPERSET_ROOT (p.ej.: /root/superset)}"
-: "${ECHARTS_TARGET_MAJOR:=6}"   # Mayor de ECharts que deseas forzar en superset-frontend
+: "${ECHARTS_TARGET_MAJOR:=6}"   # Mayor de ECharts deseado en superset-frontend
 
 cd "${SUPERSET_ROOT}"
 
@@ -63,7 +61,7 @@ PLUGIN_DIR="plugins/superset-plugin-chart-echarts-extras"
 SRC_DIR="${PLUGIN_DIR}/src"
 mkdir -p "${SRC_DIR}"/{shared,datasetLink,datasetSeriesLayoutBy,barYStack,barNegative,matrixMiniBarGeo}
 
-# package.json (añadimos plugin-chart-echarts como devDependency para compilar el import)
+# package.json (incluye plugin-chart-echarts para importar legendSection)
 cat > "${PLUGIN_DIR}/package.json" <<'EOP'
 {
   "name": "superset-plugin-chart-echarts-extras",
@@ -230,14 +228,18 @@ export default function EchartBase({
 }
 TSX
 
-# shared/controlPanelBarLike.ts
-# Usamos un marcador __ECHARTS_CONTROLS_IMPORT__ que luego auto‑detectaremos y sustituiremos.
+# ──────────────────────────────────────────────────────────────────────────────
+# shared/controlPanelBarLike.ts (VARIANTE B: portable/sin choques)
+# ──────────────────────────────────────────────────────────────────────────────
+# Usa un marcador __ECHARTS_CONTROLS_IMPORT__ que luego auto‑detectaremos.
 cat > "${SRC_DIR}/shared/controlPanelBarLike.ts" <<'TS'
 import { t } from '@superset-ui/core';
-import { ControlPanelConfig, sharedControls } from '@superset-ui/chart-controls';
+import { sharedControls } from '@superset-ui/chart-controls';
 import { legendSection } from '__ECHARTS_CONTROLS_IMPORT__';
 
-const config: ControlPanelConfig = {
+// Variante B (portable): sin forzar tipos; export como any.
+// Reutiliza sharedControls y la legendSection oficial del plugin ECharts.
+const controlPanel = {
   controlPanelSections: [
     {
       label: t('Query'),
@@ -258,9 +260,9 @@ const config: ControlPanelConfig = {
       ],
     },
   ],
-};
+} as const;
 
-export default config;
+export default controlPanel as any;
 TS
 
 # ===== datasetLink =====
@@ -352,6 +354,7 @@ export default function Chart({ height, width, echartOptions }: any) {
   return <EchartBase height={height} width={width} option={echartOptions} />;
 }
 TSX
+
 cat > "${SRC_DIR}/datasetSeriesLayoutBy/index.ts" <<'TS'
 import { Behavior, ChartMetadata, ChartPlugin, t } from '@superset-ui/core';
 import controlPanel from '../shared/controlPanelBarLike';
@@ -462,6 +465,7 @@ export default function Chart({ height, width, echartOptions }: any) {
   return <EchartBase height={height} width={width} option={echartOptions} />;
 }
 TSX
+
 cat > "${SRC_DIR}/barNegative/index.ts" <<'TS'
 import { Behavior, ChartMetadata, ChartPlugin, t } from '@superset-ui/core';
 import controlPanel from '../shared/controlPanelBarLike';
@@ -579,7 +583,6 @@ npm install --legacy-peer-deps --no-audit --no-fund
 
 # ──────────────────────────────────────────────────────────────────────────────
 # 2.1) Auto‑detección de subruta para importar legendSection
-#       Intentamos: controls → lib/controls → esm/controls
 # ──────────────────────────────────────────────────────────────────────────────
 info "Auto‑detectando subruta de '@superset-ui/plugin-chart-echarts' para legendSection…"
 node <<'NODE'
@@ -655,4 +658,4 @@ assert(String(rdv).startsWith('17.'), `react-dom no está en 17.x (actual: ${rdv
 console.log('✅ React 17 OK:', rv, rdv);
 NODE
 
-success "Plugin ECharts EXTRAS: fuentes + controles avanzados de leyenda importados del plugin oficial; build e instalación completados."
+success "Plugin ECharts EXTRAS: variante B aplicada; controles de leyenda importados del plugin oficial; build e instalación completados."
