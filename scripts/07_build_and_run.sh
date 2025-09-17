@@ -11,26 +11,23 @@ else
   success() { printf "\e[32m✔ %s\e[0m\n" "$*"; }
 fi
 
-: "${SUPERSET_ROOT:?}"
-: "${MODE:=prod}"
+: "${SUPERSET_ROOT:?Debes exportar SUPERSET_ROOT (p.ej. /root/superset)}"
+: "${MODE:=prod}"   # prod|dev
 
 cd "${SUPERSET_ROOT}"
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Pre‑hook: normalizar overrides en package.json (resolver $referencias)
-# Evita "Unable to resolve reference $react-dom" durante `npm ci`.
+# 1) Normalizar overrides en superset-frontend/package.json (resolver $refs)
+#    Evita "Unable to resolve reference $react-dom" en npm (npm valida $refs).
 # ──────────────────────────────────────────────────────────────────────────────
 FE_DIR="${SUPERSET_ROOT}/superset-frontend"
 PKG_JSON="${FE_DIR}/package.json"
-BACKUP="${FE_DIR}/package.json.bak_overrides"
+LOCK_JSON="${FE_DIR}/package-lock.json"
 
 if [[ -f "${PKG_JSON}" ]]; then
   info "Normalizando overrides en superset-frontend/package.json (si aplica)…"
-  cp -f "${PKG_JSON}" "${BACKUP}"
-  # Restaurar ante cualquier salida del script
-  trap 'if [[ -f "'"${BACKUP}"'" ]]; then mv -f "'"${BACKUP}"'" "'"${PKG_JSON}"'"; fi' EXIT
 
-  # Pasamos la ruta al proceso Node vía env; here‑doc literal evita expansión de Bash
+  # Pasamos la ruta a Node por env; here‑doc literal evita expansión de Bash.
   PKG_PATH="${PKG_JSON}" node - <<'NODE'
 const fs = require("fs");
 const p = process.env.PKG_PATH;
@@ -54,10 +51,8 @@ function resolveDollar(obj, trail=[]) {
       const ref = v.slice(1);
       const ver = rootVer(ref);
       if (!ver) {
-        console.error(
-          `✖ Override referencia $${ref} en '${pathHere}', ` +
-          `pero '${ref}' no está en dependencies/devDependencies del package.json raíz.`
-        );
+        console.error(`✖ Override referencia $${ref} en '${pathHere}', ` +
+          `pero '${ref}' no está en dependencies/devDependencies del package.json raíz.`);
         process.exit(2);
       }
       obj[k] = ver;
@@ -82,11 +77,45 @@ if (pkg.overrides) {
 }
 NODE
 else
-  warn "No se encontró ${PKG_JSON}; continuo sin normalizar overrides."
+  warn "No se encontró ${PKG_JSON}; salto normalización de overrides."
 fi
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Build & run
+# 2) Actualizar y DEJAR FIJO el lock en el repo
+#    (npm ci exige package.json/package-lock.json sincronizados)
+# ──────────────────────────────────────────────────────────────────────────────
+if [[ -f "${PKG_JSON}" ]]; then
+  info "Actualizando package-lock.json para que coincida con package.json…"
+  pushd "${FE_DIR}" >/dev/null
+
+  # Genera/actualiza el lock con el package.json vigente.
+  # --legacy-peer-deps ayuda cuando vienes de locks antiguos con peers estrictos.
+  npm install --package-lock-only --no-audit --no-fund --legacy-peer-deps
+
+  # Si el repo es git, intenta comitear el cambio del lock.
+  if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    # ¿Hubo cambios reales?
+    if ! git diff --quiet -- package-lock.json; then
+      git add package-lock.json
+      # Si el usuario no tiene identidad configurada, no forzamos; mostramos hint.
+      if git -c user.useConfigOnly=true commit -m "chore(frontend): sync package-lock.json with package.json for CI (npm ci validation)" >/dev/null 2>&1; then
+        success "Commit creado para package-lock.json actualizado"
+      else
+        warn "No se pudo crear el commit (¿falta user.name/user.email?). Deja el lock en staging y comitea manualmente:"
+        printf "   git add superset-frontend/package-lock.json && git commit -m \"chore(frontend): sync package-lock\"\n"
+      fi
+    else
+      info "package-lock.json ya estaba sincronizado; nada que comitear."
+    fi
+  else
+    warn "Directorio no es un repo git; recuerda comitear el package-lock.json actualizado."
+  fi
+
+  popd >/dev/null
+fi
+
+# ──────────────────────────────────────────────────────────────────────────────
+# 3) Build & run (igual que antes)
 # ──────────────────────────────────────────────────────────────────────────────
 if [[ "${MODE}" == "prod" ]]; then
   info "Modo producción (non-dev, imagen inmutable)…"
@@ -96,22 +125,17 @@ else
   info "Modo desarrollo (dev compose)…"
   docker compose up -d
 fi
-# Restaurar package.json original tras el build
-if [[ -f "${BACKUP}" ]]; then
-  mv -f "${BACKUP}" "${PKG_JSON}"
-  trap - EXIT
-fi
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Inicialización (admin, DB, roles)
+# 4) Inicialización (admin, DB, roles)
 # ──────────────────────────────────────────────────────────────────────────────
 info "Inicializando Superset…"
 docker compose exec superset superset fab create-admin \
-  --username "${SUPERSET_ADMIN_USERNAME:-admin}" \
+  --username  "${SUPERSET_ADMIN_USERNAME:-admin}" \
   --firstname "${SUPERSET_ADMIN_FIRSTNAME:-Admin}" \
-  --lastname "${SUPERSET_ADMIN_LASTNAME:-User}" \
-  --email "${SUPERSET_ADMIN_EMAIL:-admin@example.com}" \
-  --password "${SUPERSET_ADMIN_PASSWORD:-ChangeMe_Strong!}" \
+  --lastname  "${SUPERSET_ADMIN_LASTNAME:-User}" \
+  --email     "${SUPERSET_ADMIN_EMAIL:-admin@example.com}" \
+  --password  "${SUPERSET_ADMIN_PASSWORD:-ChangeMe_Strong!}" \
   || true
 
 docker compose exec superset superset db upgrade
