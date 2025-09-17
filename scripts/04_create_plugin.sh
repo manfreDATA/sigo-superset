@@ -24,13 +24,11 @@ png_placeholder_b64='iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP
 write_placeholder_png() { # $1 = ruta destino
   printf '%s' "$png_placeholder_b64" | base64 -d > "$1" || true
 }
-
 copy_first() { # $1 srcDir $2 baseName (sin extensión) $3 dstPath (con nombre final)
   local s="$1/$2.png"; [[ -f "$s" ]] && { cp -f "$s" "$3"; return 0; }
   s="$1/$2.jpg";        [[ -f "$s" ]] && { cp -f "$s" "$3"; return 0; }
   return 1
 }
-
 ensure_img_set() { # $1 srcDir  $2 dstDir
   mkdir -p "$2"
   # thumbnail
@@ -39,12 +37,10 @@ ensure_img_set() { # $1 srcDir  $2 dstDir
   fi
   # example1
   if ! copy_first "$1" "example1" "$2/example1.png"; then
-    # Si no hay example1 oficial, duplica thumbnail
     cp -f "$2/thumbnail.png" "$2/example1.png" 2>/dev/null || write_placeholder_png "$2/example1.png"
   fi
   # example2 (opcional)
   if ! copy_first "$1" "example2" "$2/example2.png"; then
-    # Si no hay example2, ignora (no es obligatorio tenerlo)
     :
   fi
 }
@@ -116,8 +112,9 @@ export { default as EchartsBarYStackPlugin } from './barYStack';
 export { default as EchartsBarNegativePlugin } from './barNegative';
 export { default as EchartsMatrixMiniBarGeoPlugin } from './matrixMiniBarGeo';
 TS
+
 # -------------------------------------------------------------------
-# 1.1) Thumbnails SVG (data-URI) compartidos + import de PNG oficiales
+# 1.1) Thumbnails SVG (fallbacks) compartidos
 # -------------------------------------------------------------------
 mkdir -p "${SRC_DIR}/shared"
 cat > "${SRC_DIR}/shared/thumbnails.ts" <<'TS'
@@ -178,7 +175,6 @@ TS
 
 # -------------------------------------------------------------------
 # 1.2) Copiar imágenes oficiales a cada subplugin (si existen)
-#      y crear placeholders si no.
 # -------------------------------------------------------------------
 ensure_img_set "${SRC_PIE}"       "${SRC_DIR}/datasetLink/images"
 ensure_img_set "${SRC_HIST}"      "${SRC_DIR}/datasetSeriesLayoutBy/images"
@@ -187,8 +183,18 @@ ensure_img_set "${SRC_WATERFALL}" "${SRC_DIR}/barNegative/images"
 ensure_img_set "${SRC_TREEMAP}"   "${SRC_DIR}/matrixMiniBarGeo/images"
 
 # -------------------------------------------------------------------
-# 1.3) Archivos fuente por subplugin (Chart.tsx / transformProps.ts / index.ts con metadata completa)
-#      NOTA: en index.ts importamos PNGs oficiales + añadimos data-URI fallback (usado en exampleGallery si procede)
+# 1.3) Declaraciones TS para imports de imágenes (*.png/*.jpg/*.svg)
+# -------------------------------------------------------------------
+mkdir -p "${SRC_DIR}/types"
+cat > "${SRC_DIR}/types/images.d.ts" <<'TS'
+declare module '*.png' { const src: string; export default src; }
+declare module '*.jpg' { const src: string; export default src; }
+declare module '*.jpeg' { const src: string; export default src; }
+declare module '*.svg' { const src: string; export default src; }
+TS
+
+# -------------------------------------------------------------------
+# 1.4) Archivos fuente por subplugin (Chart.tsx / transformProps.ts / index.ts con metadata completa)
 # -------------------------------------------------------------------
 
 # shared/EchartBase.tsx
@@ -208,7 +214,6 @@ export default function EchartBase({ height, width, option }:
   return <div ref={ref} style={{ height, width }} />;
 }
 TSX
-
 # shared/controlPanelBarLike.ts
 cat > "${SRC_DIR}/shared/controlPanelBarLike.ts" <<'TS'
 import { t } from '@superset-ui/core';
@@ -359,6 +364,7 @@ export default function Chart({ height, width, echartOptions }: any) {
   return <EchartBase height={height} width={width} option={echartOptions} />;
 }
 TSX
+
 cat > "${SRC_DIR}/barYStack/index.ts" <<'TS'
 import { Behavior, ChartMetadata, ChartPlugin, t } from '@superset-ui/core';
 import controlPanel from '../shared/controlPanelBarLike';
@@ -387,6 +393,7 @@ export default class EchartsBarYStackPlugin extends ChartPlugin {
   }
 }
 TS
+
 # ===== barNegative =====
 cat > "${SRC_DIR}/barNegative/transformProps.ts" <<'TS'
 import { ChartProps } from '@superset-ui/core';
@@ -409,6 +416,7 @@ export default function Chart({ height, width, echartOptions }: any) {
   return <EchartBase height={height} width={width} option={echartOptions} />;
 }
 TSX
+
 cat > "${SRC_DIR}/barNegative/index.ts" <<'TS'
 import { Behavior, ChartMetadata, ChartPlugin, t } from '@superset-ui/core';
 import controlPanel from '../shared/controlPanelBarLike';
@@ -437,7 +445,6 @@ export default class EchartsBarNegativePlugin extends ChartPlugin {
   }
 }
 TS
-
 # ===== matrixMiniBarGeo =====
 cat > "${SRC_DIR}/matrixMiniBarGeo/transformProps.ts" <<'TS'
 import { ChartProps } from '@superset-ui/core';
@@ -469,6 +476,7 @@ export default function Chart({ height, width, echartOptions }: any) {
   return <EchartBase height={height} width={width} option={echartOptions} />;
 }
 TSX
+
 cat > "${SRC_DIR}/matrixMiniBarGeo/index.ts" <<'TS'
 import { Behavior, ChartMetadata, ChartPlugin, t } from '@superset-ui/core';
 import controlPanel from '../shared/controlPanelBarLike';
@@ -520,6 +528,7 @@ if (!pkg.devDependencies['typescript']) pkg.devDependencies['typescript'] = '^5.
 fs.writeFileSync(p, JSON.stringify(pkg, null, 2));
 console.log('✅ devDependencies listos para el build TS del plugin');
 NODE
+
 # -------------------------------------------------------------------
 # 3) INSTALAR y COMPILAR el PLUGIN
 # -------------------------------------------------------------------
