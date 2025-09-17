@@ -17,10 +17,8 @@ fi
 cd "${SUPERSET_ROOT}"
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Pre‑hook: normalizar `overrides` del package.json (resolver $referencias)
-# Motivo: npm falla con "Unable to resolve reference $react-dom" si hay
-# overrides con "$dep" y 'dep' no está declarado en dependencias raíz.
-# Referencias: npm docs sobre overrides y limitaciones con $refs.
+# Pre‑hook: normalizar overrides en package.json (resolver $referencias)
+# Evita "Unable to resolve reference $react-dom" durante `npm ci`.
 # ──────────────────────────────────────────────────────────────────────────────
 FE_DIR="${SUPERSET_ROOT}/superset-frontend"
 PKG_JSON="${FE_DIR}/package.json"
@@ -29,57 +27,66 @@ BACKUP="${FE_DIR}/package.json.bak_overrides"
 if [[ -f "${PKG_JSON}" ]]; then
   info "Normalizando overrides en superset-frontend/package.json (si aplica)…"
   cp -f "${PKG_JSON}" "${BACKUP}"
+  # Restaurar ante cualquier salida del script
   trap 'if [[ -f "'"${BACKUP}"'" ]]; then mv -f "'"${BACKUP}"'" "'"${PKG_JSON}"'"; fi' EXIT
 
-  node -e '
-    const fs = require("fs");
-    const p = "'"${PKG_JSON}"'";
-    const pkg = JSON.parse(fs.readFileSync(p, "utf8"));
-    const rootVer = (name) =>
-      (pkg.dependencies && pkg.dependencies[name]) ||
-      (pkg.devDependencies && pkg.devDependencies[name]) ||
-      null;
+  # Pasamos la ruta al proceso Node vía env; here‑doc literal evita expansión de Bash
+  PKG_PATH="${PKG_JSON}" node - <<'NODE'
+const fs = require("fs");
+const p = process.env.PKG_PATH;
+if (!p || !fs.existsSync(p)) {
+  console.log("ℹ️ package.json no encontrado; salto normalización");
+  process.exit(0);
+}
+const pkg = JSON.parse(fs.readFileSync(p, "utf8"));
+const rootVer = (name) =>
+  (pkg.dependencies && pkg.dependencies[name]) ||
+  (pkg.devDependencies && pkg.devDependencies[name]) ||
+  null;
 
-    let changed = false;
-    function resolveDollar(obj, trail=[]) {
-      if (!obj || typeof obj !== "object") return;
-      for (const k of Object.keys(obj)) {
-        const v = obj[k];
-        const here = trail.concat(k).join(".");
-        if (typeof v === "string" && v.startsWith("$")) {
-          const ref = v.slice(1);
-          const ver = rootVer(ref);
-          if (!ver) {
-            console.error(`✖ Override referencia $${ref} en '${here}', pero '${ref}' no está en dependencies/devDependencies del package.json raíz.`);
-            process.exit(2);
-          }
-          obj[k] = ver;
-          changed = true;
-          console.log(`↺ Resuelto ${here}: "${v}" -> "${ver}"`);
-        } else if (v && typeof v === "object") {
-          resolveDollar(v, trail.concat(k));
-        }
+let changed = false;
+function resolveDollar(obj, trail=[]) {
+  if (!obj || typeof obj !== "object") return;
+  for (const k of Object.keys(obj)) {
+    const v = obj[k];
+    const pathHere = [...trail, k].join(".");
+    if (typeof v === "string" && v.startsWith("$")) {
+      const ref = v.slice(1);
+      const ver = rootVer(ref);
+      if (!ver) {
+        console.error(
+          `✖ Override referencia $${ref} en '${pathHere}', ` +
+          `pero '${ref}' no está en dependencies/devDependencies del package.json raíz.`
+        );
+        process.exit(2);
       }
+      obj[k] = ver;
+      changed = true;
+      console.log(`↺ Resuelto ${pathHere}: "${v}" -> "${ver}"`);
+    } else if (v && typeof v === "object") {
+      resolveDollar(v, [...trail, k]);
     }
+  }
+}
 
-    if (pkg.overrides) {
-      resolveDollar(pkg.overrides, ["overrides"]);
-      if (changed) {
-        fs.writeFileSync(p, JSON.stringify(pkg, null, 2));
-        console.log("✅ Overrides normalizados en package.json");
-      } else {
-        console.log("ℹ️ No se encontraron $referencias en overrides");
-      }
-    } else {
-      console.log("ℹ️ package.json no define overrides");
-    }
-  '
+if (pkg.overrides) {
+  resolveDollar(pkg.overrides, ["overrides"]);
+  if (changed) {
+    fs.writeFileSync(p, JSON.stringify(pkg, null, 2));
+    console.log("✅ Overrides normalizados en package.json");
+  } else {
+    console.log("ℹ️ No se encontraron $referencias en overrides");
+  }
+} else {
+  console.log("ℹ️ package.json no define overrides");
+}
+NODE
 else
   warn "No se encontró ${PKG_JSON}; continuo sin normalizar overrides."
 fi
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Build & run (tu lógica original)
+# Build & run
 # ──────────────────────────────────────────────────────────────────────────────
 if [[ "${MODE}" == "prod" ]]; then
   info "Modo producción (non-dev, imagen inmutable)…"
@@ -89,7 +96,7 @@ else
   info "Modo desarrollo (dev compose)…"
   docker compose up -d
 fi
-# Restaurar el package.json original tras el build
+# Restaurar package.json original tras el build
 if [[ -f "${BACKUP}" ]]; then
   mv -f "${BACKUP}" "${PKG_JSON}"
   trap - EXIT
