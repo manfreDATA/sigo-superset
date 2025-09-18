@@ -4,7 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="6e664c11-39a0-483a-a12d-cf7922f58682" name="Changes" comment="reescribe las $referencias de overrides a versiones explícitas leyendo la versión real desde las dependencias raíz del package.json de superset-frontend" />
+    <list default="true" id="6e664c11-39a0-483a-a12d-cf7922f58682" name="Changes" comment="package-lock override">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -34,22 +36,22 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "ASKED_SHARE_PROJECT_CONFIGURATION_FILES": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "SHELLCHECK.PATH": "C:\\Users\\Admin\\AppData\\Roaming\\JetBrains\\PyCharm2025.2\\plugins\\Shell Script\\shellcheck.exe",
-    "git-widget-placeholder": "master",
-    "last_opened_file_path": "C:/Users/Admin/AppData/Roaming/JetBrains/PyCharm2025.2/scratches",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ASKED_SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;SHELLCHECK.PATH&quot;: &quot;C:\\Users\\Admin\\AppData\\Roaming\\JetBrains\\PyCharm2025.2\\plugins\\Shell Script\\shellcheck.exe&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;master&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/Admin/AppData/Roaming/JetBrains/PyCharm2025.2/scratches&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="C:\Users\Admin\AppData\Roaming\JetBrains\PyCharm2025.2\scratches" />
@@ -71,7 +73,8 @@
       <option name="presentableId" value="Default" />
       <updated>1758051681230</updated>
       <workItem from="1758051682428" duration="6060000" />
-      <workItem from="1758119586478" duration="7956000" />
+      <workItem from="1758119586478" duration="8777000" />
+      <workItem from="1758144170722" duration="1347000" />
     </task>
     <task id="LOCAL-00001" summary="enforce react 17 for superset compatibility">
       <option name="closed" value="true" />
@@ -161,7 +164,23 @@
       <option name="project" value="LOCAL" />
       <updated>1758140698598</updated>
     </task>
-    <option name="localTasksCounter" value="12" />
+    <task id="LOCAL-00012" summary="pasar el código a Node con here‑doc literal (&lt;&lt;'NODE') y usar una variable de entorno para transferir la ruta del package.json.">
+      <option name="closed" value="true" />
+      <created>1758141182616</created>
+      <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
+      <option name="project" value="LOCAL" />
+      <updated>1758141182616</updated>
+    </task>
+    <task id="LOCAL-00013" summary="package-lock override">
+      <option name="closed" value="true" />
+      <created>1758142868041</created>
+      <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL-00013" />
+      <option name="project" value="LOCAL" />
+      <updated>1758142868041</updated>
+    </task>
+    <option name="localTasksCounter" value="14" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -179,6 +198,8 @@
     <MESSAGE value="Se elimina el fallbackThumb de los iconos de los plugins" />
     <MESSAGE value="evita choques de tipos al no forzar ControlPanelConfig y exportar como any, pero mantiene la reutilización de sharedControls y de la legendSection oficial (scroll/plain, orientación, margen, show legend)." />
     <MESSAGE value="reescribe las $referencias de overrides a versiones explícitas leyendo la versión real desde las dependencias raíz del package.json de superset-frontend" />
-    <option name="LAST_COMMIT_MESSAGE" value="reescribe las $referencias de overrides a versiones explícitas leyendo la versión real desde las dependencias raíz del package.json de superset-frontend" />
+    <MESSAGE value="pasar el código a Node con here‑doc literal (&lt;&lt;'NODE') y usar una variable de entorno para transferir la ruta del package.json." />
+    <MESSAGE value="package-lock override" />
+    <option name="LAST_COMMIT_MESSAGE" value="package-lock override" />
   </component>
 </project>
