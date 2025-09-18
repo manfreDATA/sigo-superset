@@ -5,6 +5,12 @@ BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${BASE_DIR}/scripts/lib.sh"
 require_root
 
+
+info "Cargando flags desde config/.env"
+set -a
+source "${BASE_DIR}/config/.env"
+set +a
+
 info "Cargando flags desde config/flags.env"
 set -a
 source "${BASE_DIR}/config/flags.env"
