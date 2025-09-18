@@ -1,53 +1,57 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -Eeuo pipefail
 
-# Carga helpers si existen
-if [[ -f "$(dirname "$0")/lib.sh" ]]; then
-  source "$(dirname "$0")/lib.sh"
-else
-  info()    { printf "\e[34m➤ %s\e[0m\n" "$*"; }
-  warn()    { printf "\e[33m⚠ %s\e[0m\n" "$*"; }
-  success() { printf "\e[32m✔ %s\e[0m\n" "$*"; }
-fi
-
-: "${SUPERSET_ROOT:?}"    # Debe apuntar al root del repo Superset
 BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+source "${BASE_DIR}/scripts/lib.sh"
 
-cd "${SUPERSET_ROOT}"
+detect_compose_cmd
+ensure_docker_running
 
-# 1) Copia .env si no existe
-if [[ ! -f "${SUPERSET_ROOT}/.env" ]]; then
-  cp "${BASE_DIR}/config/.env" "${SUPERSET_ROOT}/.env"
+# Prepara args de compose (-f para cada archivo)
+IFS=',' read -r -a COMPOSE_FILES <<< "${DOCKER_COMPOSE_FILES:?Define DOCKER_COMPOSE_FILES}"
+COMPOSE_ARGS=()
+for f in "${COMPOSE_FILES[@]}"; do
+  if [[ -f "${BASE_DIR}/${f}" ]]; then
+    COMPOSE_ARGS+=( -f "${BASE_DIR}/${f}" )
+  else
+    warn "Archivo docker-compose no encontrado: ${f}"
+  fi
+done
+
+# Usa el .env del proyecto si lo tienes fuera de raíz
+COMPOSE_ENV_ARGS=()
+if [[ -f "${BASE_DIR}/config/.env" ]]; then
+  COMPOSE_ENV_ARGS+=( --env-file "${BASE_DIR}/config/.env" )
 fi
 
-# 2) Genera SECRET_KEY si hay placeholder
-if grep -q "__GENERATE_ME__" "${SUPERSET_ROOT}/.env"; then
-  SK=$(openssl rand -hex 32)
-  sed -i "s/SUPERSET_SECRET_KEY=__GENERATE_ME__/SUPERSET_SECRET_KEY=${SK}/g" "${SUPERSET_ROOT}/.env"
-  info "Generado SUPERSET_SECRET_KEY en .env"
+# Nombre del proyecto (para aislar redes/volúmenes)
+: "${COMPOSE_PROJECT_NAME:=superset}"
+export COMPOSE_PROJECT_NAME
+
+info "Archivos Compose: ${DOCKER_COMPOSE_FILES}"
+info "Proyecto Compose: ${COMPOSE_PROJECT_NAME}"
+
+# Opcionalmente actualiza imágenes base (no falla si no hay registry)
+$DOCKER_COMPOSE "${COMPOSE_ENV_ARGS[@]}" "${COMPOSE_ARGS[@]}" pull || true
+
+# Levanta con build y orphans fuera; intenta esperar healthchecks si la versión lo soporta
+if $DOCKER_COMPOSE version >/dev/null 2>&1 && $DOCKER_COMPOSE version 2>/dev/null | grep -q "Docker Compose version"; then
+  # Compose v2: soporta --wait (según versión)
+  if $DOCKER_COMPOSE "${COMPOSE_ENV_ARGS[@]}" "${COMPOSE_ARGS[@]}" up -d --build --remove-orphans --wait; then
+    success "Stack levantado y saludable (healthchecks OK)."
+  else
+    warn "Tu Compose podría no soportar --wait. Levantando sin esperar healthchecks…"
+    $DOCKER_COMPOSE "${COMPOSE_ENV_ARGS[@]}" "${COMPOSE_ARGS[@]}" up -d --build --remove-orphans
+  fi
+else
+  # Compose v1
+  $DOCKER_COMPOSE "${COMPOSE_ENV_ARGS[@]}" "${COMPOSE_ARGS[@]}" up -d --build --remove-orphans
 fi
 
-# 3) Copia superset_config_docker.py y requirements-local.txt (drivers)
-mkdir -p docker/pythonpath_dev
-cp -f "${BASE_DIR}/config/superset_config_docker.py" docker/pythonpath_dev/superset_config_docker.py
+# Muestra estado y cómo ver logs
+$DOCKER_COMPOSE "${COMPOSE_ENV_ARGS[@]}" "${COMPOSE_ARGS[@]}" ps
+info "Logs (Ctrl+C para salir):"
+echo "$DOCKER_COMPOSE ${COMPOSE_ENV_ARGS[*]} ${COMPOSE_ARGS[*]} logs -f --tail=200"
 
-mkdir -p docker
-if [[ -f "${BASE_DIR}/config/requirements-local.txt" ]]; then
-  cp -f "${BASE_DIR}/config/requirements-local.txt" docker/requirements-local.txt
-  info "Agregado requirements-local.txt (p.ej. psycopg2-binary) a docker/"
-fi
-
-# 4) Copia override compose para non-dev
-cp -f "${BASE_DIR}/config/docker-compose-non-dev.override.yml" \
-      "${SUPERSET_ROOT}/docker-compose-non-dev.override.yml"
-
-# 5) Refuerzo npm en superset-frontend
-if [[ -f "${SUPERSET_ROOT}/superset-frontend/package.json" ]]; then
-  cat > "${SUPERSET_ROOT}/superset-frontend/.npmrc" <<'NPMRC'
-legacy-peer-deps=true
-audit=false
-fund=false
-NPMRC
-fi
-
-success "Configuración lista (.env, superset_config_docker.py, requirements-local.txt, override compose, .npmrc)."
+HOST_PORT_SHOW="${HOST_PORT:-8088}"
+success "Superset debería estar en: http://localhost:${HOST_PORT_SHOW}"

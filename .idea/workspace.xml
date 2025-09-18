@@ -4,9 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="6e664c11-39a0-483a-a12d-cf7922f58682" name="Changes" comment="fix package.json and lockfile version fix_try 2">
+    <list default="true" id="6e664c11-39a0-483a-a12d-cf7922f58682" name="Changes" comment="no cargaba el .env">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/run_all.sh" beforeDir="false" afterPath="$PROJECT_DIR$/run_all.sh" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/scripts/07_build_and_run.sh" beforeDir="false" afterPath="$PROJECT_DIR$/scripts/07_build_and_run.sh" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -41,6 +41,7 @@
   "keyToString": {
     "ASKED_SHARE_PROJECT_CONFIGURATION_FILES": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
     "RunOnceActivity.git.unshallow": "true",
     "SHELLCHECK.PATH": "C:\\Users\\Admin\\AppData\\Roaming\\JetBrains\\PyCharm2025.2\\plugins\\Shell Script\\shellcheck.exe",
     "git-widget-placeholder": "master",
@@ -76,7 +77,7 @@
       <updated>1758051681230</updated>
       <workItem from="1758051682428" duration="6060000" />
       <workItem from="1758119586478" duration="8777000" />
-      <workItem from="1758144170722" duration="4606000" />
+      <workItem from="1758144170722" duration="7030000" />
     </task>
     <task id="LOCAL-00001" summary="enforce react 17 for superset compatibility">
       <option name="closed" value="true" />
@@ -206,7 +207,15 @@
       <option name="project" value="LOCAL" />
       <updated>1758193873016</updated>
     </task>
-    <option name="localTasksCounter" value="17" />
+    <task id="LOCAL-00017" summary="no cargaba el .env">
+      <option name="closed" value="true" />
+      <created>1758195266486</created>
+      <option name="number" value="00017" />
+      <option name="presentableId" value="LOCAL-00017" />
+      <option name="project" value="LOCAL" />
+      <updated>1758195266486</updated>
+    </task>
+    <option name="localTasksCounter" value="18" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -240,6 +249,7 @@
     <MESSAGE value="docker compose script update" />
     <MESSAGE value="fix package.json and lockfile version fix" />
     <MESSAGE value="fix package.json and lockfile version fix_try 2" />
-    <option name="LAST_COMMIT_MESSAGE" value="fix package.json and lockfile version fix_try 2" />
+    <MESSAGE value="no cargaba el .env" />
+    <option name="LAST_COMMIT_MESSAGE" value="no cargaba el .env" />
   </component>
 </project>
