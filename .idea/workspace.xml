@@ -4,8 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="6e664c11-39a0-483a-a12d-cf7922f58682" name="Changes" comment="docker compose script update">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+    <list default="true" id="6e664c11-39a0-483a-a12d-cf7922f58682" name="Changes" comment="fix package.json and lockfile version fix">
       <change beforePath="$PROJECT_DIR$/scripts/07_build_and_run.sh" beforeDir="false" afterPath="$PROJECT_DIR$/scripts/07_build_and_run.sh" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -76,7 +75,7 @@
       <updated>1758051681230</updated>
       <workItem from="1758051682428" duration="6060000" />
       <workItem from="1758119586478" duration="8777000" />
-      <workItem from="1758144170722" duration="2865000" />
+      <workItem from="1758144170722" duration="3613000" />
     </task>
     <task id="LOCAL-00001" summary="enforce react 17 for superset compatibility">
       <option name="closed" value="true" />
@@ -190,11 +189,30 @@
       <option name="project" value="LOCAL" />
       <updated>1758190887974</updated>
     </task>
-    <option name="localTasksCounter" value="15" />
+    <task id="LOCAL-00015" summary="fix package.json and lockfile version fix">
+      <option name="closed" value="true" />
+      <created>1758192505252</created>
+      <option name="number" value="00015" />
+      <option name="presentableId" value="LOCAL-00015" />
+      <option name="project" value="LOCAL" />
+      <updated>1758192505252</updated>
+    </task>
+    <option name="localTasksCounter" value="16" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="enforce react 17 for superset compatibility" />
@@ -211,6 +229,7 @@
     <MESSAGE value="pasar el código a Node con here‑doc literal (&lt;&lt;'NODE') y usar una variable de entorno para transferir la ruta del package.json." />
     <MESSAGE value="package-lock override" />
     <MESSAGE value="docker compose script update" />
-    <option name="LAST_COMMIT_MESSAGE" value="docker compose script update" />
+    <MESSAGE value="fix package.json and lockfile version fix" />
+    <option name="LAST_COMMIT_MESSAGE" value="fix package.json and lockfile version fix" />
   </component>
 </project>
