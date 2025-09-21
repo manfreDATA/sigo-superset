@@ -17,9 +17,10 @@ echo "📁 Clonando repositorio principal SIGO Superset..."
 cd /root
 git clone https://github.com/manfreDATA/sigo-superset.git
 cd sigo-superset
+git fetch origin
+git checkout dev_dockerfile
 
 echo "🚀 Levantando entorno con Docker Compose..."
 docker compose -f docker-compose-non-dev.yml --env-file .env-local up -d
 
 echo "✅ Entorno SIGO Superset desplegado correctamente."
-echo "📊 Puedes importar tus archivos CSV desde la interfaz de Superset."
