@@ -1,7 +1,7 @@
 services:
   superset:
     env_file:
-      - ./.env
+      - .env-local
     ports:
       - "${HOST_PORT:-8088}:8088"
     environment:
@@ -13,7 +13,7 @@ services:
 
   superset-worker:
     env_file:
-      - ./.env
+      - .env-local
     environment:
       - SUPERSET_SECRET_KEY=${SUPERSET_SECRET_KEY}
       - SUPERSET_CONFIG_PATH=/app/pythonpath/superset_config_docker.py
@@ -23,7 +23,7 @@ services:
 
   superset-worker-beat:
     env_file:
-      - ./.env
+      - .env-local
     environment:
       - SUPERSET_SECRET_KEY=${SUPERSET_SECRET_KEY}
       - SUPERSET_CONFIG_PATH=/app/pythonpath/superset_config_docker.py

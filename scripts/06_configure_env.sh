@@ -6,7 +6,7 @@ BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 cd "${SUPERSET_ROOT}"
 
-# Copia .env al root del repo (al nivel del compose)
+# Copia .env-local al root del repo (al nivel del compose)
 if [[ ! -f "${SUPERSET_ROOT}/.env" ]]; then
   cp "${BASE_DIR}/config/.env" "${SUPERSET_ROOT}/.env"
 fi
