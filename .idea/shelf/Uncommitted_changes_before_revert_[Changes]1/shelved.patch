@@ -1,0 +1,552 @@
+Index: config/.env
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+># Credenciales bootstrap\r\nSUPERSET_ADMIN_USERNAME=admin\r\nSUPERSET_ADMIN_PASSWORD=ChangeMe_Strong!\r\nSUPERSET_ADMIN_FIRSTNAME=Admin\r\nSUPERSET_ADMIN_LASTNAME=User\r\nSUPERSET_ADMIN_EMAIL=admin@example.com\r\n\r\n# Secret key (si dejas placeholder, se genera)\r\nSUPERSET_SECRET_KEY=__GENERATE_ME__\r\n\r\n# Puerto host UI\r\nHOST_PORT=8088\r\n\r\n# (Opcional) DB metadatos externa\r\n# SQLALCHEMY_DATABASE_URI=postgresql+psycopg2://user:pass@host:5432/superset\r\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/config/.env b/config/.env
+--- a/config/.env	(revision d970ac1cc52799565e530bc10a03b51184292c22)
++++ b/config/.env	(date 1758427722474)
+@@ -1,15 +1,50 @@
+-# Credenciales bootstrap
+-SUPERSET_ADMIN_USERNAME=admin
+-SUPERSET_ADMIN_PASSWORD=ChangeMe_Strong!
+-SUPERSET_ADMIN_FIRSTNAME=Admin
+-SUPERSET_ADMIN_LASTNAME=User
+-SUPERSET_ADMIN_EMAIL=admin@example.com
++##############################################
++# sigo-superset /config/.env-local
++# Consolida variables para Docker Compose y Superset
++##############################################
+ 
+-# Secret key (si dejas placeholder, se genera)
+-SUPERSET_SECRET_KEY=__GENERATE_ME__
++# ---- Proyecto / Compose
++COMPOSE_PROJECT_NAME=sigo-superset
++TZ=America/Santiago
+ 
+-# Puerto host UI
++# Imagen de Superset a usar (fija una versión estable)
++# Revisa releases: https://github.com/apache/superset/releases
++SUPERSET_IMAGE=apache/superset
++SUPERSET_TAG=5.0.0
++
++# Puerto host para UI
+ HOST_PORT=8088
+ 
+-# (Opcional) DB metadatos externa
+-# SQLALCHEMY_DATABASE_URI=postgresql+psycopg2://user:pass@host:5432/superset
++# ---- Credenciales bootstrap admin (solo para init)
++SUPERSET_ADMIN_USERNAME=admin
++SUPERSET_ADMIN_PASSWORD=ChangeMe123!
++SUPERSET_ADMIN_EMAIL=admin@superset.local
++
++# ---- Seguridad (DEBES cambiar esta clave antes de prod)
++# Genera una con: python -c 'import secrets; print(secrets.token_urlsafe(64))'
++SUPERSET_SECRET_KEY=please-change-me-32b-min-random-key-1234567890abcdef
++
++# ---- Postgres (metastore de Superset)
++POSTGRES_HOST=postgres
++POSTGRES_PORT=5432
++POSTGRES_DB=superset
++POSTGRES_USER=superset
++POSTGRES_PASSWORD=superset
++
++# ---- Redis (cache + cola Celery)
++REDIS_HOST=redis
++REDIS_PORT=6379
++# Deja vacío si no usas auth (por defecto la imagen oficial no la requiere)
++REDIS_PASSWORD=
++
++# ---- Modo app y ejemplos
++SUPERSET_ENV=production
++SUPERSET_DEBUG=0
++SUPERSET_LOAD_EXAMPLES=no
++
++# ---- Integraciones opcionales
++MAPBOX_API_KEY=
++
++# ---- Varias
++PIP_NO_CACHE_DIR=1
++PYTHONUNBUFFERED=1
+Index: config/superset_config_docker.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>import os\r\n\r\nSECRET_KEY = os.getenv(\"SUPERSET_SECRET_KEY\", \"PLEASE_CHANGE_ME\")\r\nENABLE_PROXY_FIX = True\r\nROW_LIMIT = 5000\r\n\r\n# Priorizar Postgres en el modal de nueva BD\r\nPREFERRED_DATABASES = [\"PostgreSQL\"]\r\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/config/superset_config_docker.py b/config/superset_config_docker.py
+--- a/config/superset_config_docker.py	(revision d970ac1cc52799565e530bc10a03b51184292c22)
++++ b/config/superset_config_docker.py	(date 1758427722483)
+@@ -1,8 +1,95 @@
++# config/superset-config-docker.py
+ import os
++from datetime import timedelta
++
++# ---- SECRET_KEY (OBLIGATORIO en despliegue)
++SECRET_KEY = os.getenv("SUPERSET_SECRET_KEY") or os.getenv("SECRET_KEY")
++if not SECRET_KEY and os.getenv("SUPERSET_ENV", "production") == "production":
++    raise RuntimeError(
++        "SUPERSET_SECRET_KEY no está definido. Establécelo en config/.env-local antes de producción."
++    )
++
++# ---- Base de datos (metastore) a partir de POSTGRES_*
++def _build_sqlalchemy_uri():
++    host = os.getenv("POSTGRES_HOST", "postgres")
++    port = os.getenv("POSTGRES_PORT", "5432")
++    db = os.getenv("POSTGRES_DB", "superset")
++    user = os.getenv("POSTGRES_USER", "superset")
++    pw = os.getenv("POSTGRES_PASSWORD", "superset")
++    return f"postgresql+psycopg2://{user}:{pw}@{host}:{port}/{db}"
++
++SQLALCHEMY_DATABASE_URI = os.getenv("SQLALCHEMY_DATABASE_URI", _build_sqlalchemy_uri())
++
++# Pooling (sensible por defecto; ajusta si tu DB lo requiere)
++SQLALCHEMY_POOL_SIZE = int(os.getenv("SQLALCHEMY_POOL_SIZE", "10"))
++SQLALCHEMY_MAX_OVERFLOW = int(os.getenv("SQLALCHEMY_MAX_OVERFLOW", "20"))
++SQLALCHEMY_POOL_RECYCLE = int(os.getenv("SQLALCHEMY_POOL_RECYCLE", "3600"))
++SQLALCHEMY_TRACK_MODIFICATIONS = False
++
++# ---- Redis (cache y Celery)
++REDIS_HOST = os.getenv("REDIS_HOST")
++REDIS_PORT = os.getenv("REDIS_PORT")
++REDIS_PASSWORD = os.getenv("REDIS_PASSWORD", "")
++
++def _redis_url(db: int) -> str | None:
++    if not REDIS_HOST or not REDIS_PORT:
++        return None
++    auth = f":{REDIS_PASSWORD}@" if REDIS_PASSWORD else ""
++    return f"redis://{auth}{REDIS_HOST}:{REDIS_PORT}/{db}"
++
++REDIS_URL_BROKER = _redis_url(0)
++REDIS_URL_CACHE = _redis_url(1)
++REDIS_URL_RESULTS = _redis_url(2)
++
++# ---- Celery (colas de tareas)
++class CeleryConfig:
++    broker_url = REDIS_URL_BROKER or "redis://redis:6379/0"
++    result_backend = REDIS_URL_RESULTS or "redis://redis:6379/2"
++    broker_transport_options = {"visibility_timeout": 3600}
++    task_acks_late = True
++    worker_prefetch_multiplier = 1
++    timezone = os.getenv("TZ", "UTC")
++CELERY_CONFIG = CeleryConfig
++
++# ---- Cachés (Redis en prod; fallback simple si no hay Redis)
++if REDIS_URL_CACHE:
++    CACHE_CONFIG = {
++        "CACHE_TYPE": "RedisCache",
++        "CACHE_DEFAULT_TIMEOUT": 300,
++        "CACHE_KEY_PREFIX": "superset_cache",
++        "CACHE_REDIS_URL": REDIS_URL_CACHE,
++    }
++    DATA_CACHE_CONFIG = CACHE_CONFIG
++    FILTER_STATE_CACHE_CONFIG = CACHE_CONFIG
++    EXPLORE_FORM_DATA_CACHE_CONFIG = CACHE_CONFIG
++else:
++    CACHE_CONFIG = {"CACHE_TYPE": "SimpleCache"}
++    DATA_CACHE_CONFIG = CACHE_CONFIG
++    FILTER_STATE_CACHE_CONFIG = CACHE_CONFIG
++    EXPLORE_FORM_DATA_CACHE_CONFIG = CACHE_CONFIG
++
++# ---- Parámetros generales
++ROW_LIMIT = int(os.getenv("ROW_LIMIT", "5000"))
++SUPERSET_WEBSERVER_TIMEOUT = int(os.getenv("SUPERSET_WEBSERVER_TIMEOUT", "300"))
++WEBDRIVER_BASEURL = os.getenv("WEBDRIVER_BASEURL", "http://localhost:8088")
+ 
+-SECRET_KEY = os.getenv("SUPERSET_SECRET_KEY", "PLEASE_CHANGE_ME")
+-ENABLE_PROXY_FIX = True
+-ROW_LIMIT = 5000
++# ---- Mapbox (si aplica)
++MAPBOX_API_KEY = os.getenv("MAPBOX_API_KEY", "")
+ 
+-# Priorizar Postgres en el modal de nueva BD
+-PREFERRED_DATABASES = ["PostgreSQL"]
++# ---- CORS (ajusta para tu dominio en prod)
++ENABLE_CORS = True
++CORS_OPTIONS = {
++    "supports_credentials": True,
++    "allow_headers": ["*"],
++    "expose_headers": ["*"],
++    "resources": ["/*"],
++    "origins": ["*"],
++}
++
++# ---- Flags (ajusta a tus necesidades)
++FEATURE_FLAGS = {
++    # "EMBEDDED_SUPERSET": True,
++}
++
++# ---- Seguridad / sesión
++PERMANENT_SESSION_LIFETIME = timedelta(days=7)
+Index: config/flags.env
+===================================================================
+diff --git a/config/flags.env b/config/flags.env
+deleted file mode 100644
+--- a/config/flags.env	(revision d970ac1cc52799565e530bc10a03b51184292c22)
++++ /dev/null	(revision d970ac1cc52799565e530bc10a03b51184292c22)
+@@ -1,18 +0,0 @@
+-# === Modo de despliegue ===
+-MODE=prod             # prod | dev
+-
+-# === Versionado frontend ===
+-ECHARTS_TARGET_MAJOR=6
+-REACT_TARGET_MAJOR=17
+-
+-# === Puertos y paths ===
+-HOST_PORT=8088
+-# Ruta donde se clona superset
+-SUPERSET_ROOT=/root/superset
+-
+-# === Git ===
+-GIT_URL=https://github.com/apache/superset.git
+-GIT_TAG=6.0.0rc1
+-
+-# === Otros ===
+-NON_INTERACTIVE=1
+Index: config/docker-compose-non-dev.override.config.yml
+===================================================================
+diff --git a/config/docker-compose-non-dev.override.config.yml b/config/docker-compose-non-dev.override.config.yml
+deleted file mode 100644
+--- a/config/docker-compose-non-dev.override.config.yml	(revision d970ac1cc52799565e530bc10a03b51184292c22)
++++ /dev/null	(revision d970ac1cc52799565e530bc10a03b51184292c22)
+@@ -1,32 +0,0 @@
+-
+-version: '3.7'
+-services:
+-  superset:
+-    env_file:
+-    - ./.env
+-    ports:
+-    - ${HOST_PORT:-8088}:8088
+-    environment:
+-    - SUPERSET_SECRET_KEY=${SUPERSET_SECRET_KEY}
+-    - SUPERSET_CONFIG_PATH=/app/config/superset_config_docker.py
+-    - PYTHONPATH=/app/config
+-    volumes:
+-    - ./config:/app/config
+-  superset-worker:
+-    env_file:
+-    - ./.env
+-    environment:
+-    - SUPERSET_SECRET_KEY=${SUPERSET_SECRET_KEY}
+-    - SUPERSET_CONFIG_PATH=/app/config/superset_config_docker.py
+-    - PYTHONPATH=/app/config
+-    volumes:
+-    - ./config:/app/config
+-  superset-worker-beat:
+-    env_file:
+-    - ./.env
+-    environment:
+-    - SUPERSET_SECRET_KEY=${SUPERSET_SECRET_KEY}
+-    - SUPERSET_CONFIG_PATH=/app/config/superset_config_docker.py
+-    - PYTHONPATH=/app/config
+-    volumes:
+-    - ./config:/app/config
+Index: config/docker-compose-non-dev.override.yml
+===================================================================
+diff --git a/config/docker-compose-non-dev.override.yml b/config/docker-compose-non-dev.override.yml
+deleted file mode 100644
+--- a/config/docker-compose-non-dev.override.yml	(revision d970ac1cc52799565e530bc10a03b51184292c22)
++++ /dev/null	(revision d970ac1cc52799565e530bc10a03b51184292c22)
+@@ -1,34 +0,0 @@
+-version: "3.7"
+-
+-services:
+-  superset:
+-    env_file:
+-      - ./.env
+-    ports:
+-      - "${HOST_PORT:-8088}:8088"
+-    environment:
+-      - SUPERSET_SECRET_KEY=${SUPERSET_SECRET_KEY}
+-      - SUPERSET_CONFIG_PATH=/app/pythonpath/superset_config_docker.py
+-      - PYTHONPATH=/app/pythonpath
+-    volumes:
+-      - ./docker/pythonpath_dev:/app/pythonpath
+-
+-  superset-worker:
+-    env_file:
+-      - ./.env
+-    environment:
+-      - SUPERSET_SECRET_KEY=${SUPERSET_SECRET_KEY}
+-      - SUPERSET_CONFIG_PATH=/app/pythonpath/superset_config_docker.py
+-      - PYTHONPATH=/app/pythonpath
+-    volumes:
+-      - ./docker/pythonpath_dev:/app/pythonpath
+-
+-  superset-worker-beat:
+-    env_file:
+-      - ./.env
+-    environment:
+-      - SUPERSET_SECRET_KEY=${SUPERSET_SECRET_KEY}
+-      - SUPERSET_CONFIG_PATH=/app/pythonpath/superset_config_docker.py
+-      - PYTHONPATH=/app/pythonpath
+-    volumes:
+-      - ./docker/pythonpath_dev:/app/pythonpath
+Index: .idea/workspace.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n<project version=\"4\">\r\n  <component name=\"AutoImportSettings\">\r\n    <option name=\"autoReloadType\" value=\"SELECTIVE\" />\r\n  </component>\r\n  <component name=\"ChangeListManager\">\r\n    <list default=\"true\" id=\"6e664c11-39a0-483a-a12d-cf7922f58682\" name=\"Changes\" comment=\"fix package.json and lockfile version fix_try 2\">\r\n      <change beforePath=\"$PROJECT_DIR$/.idea/workspace.xml\" beforeDir=\"false\" afterPath=\"$PROJECT_DIR$/.idea/workspace.xml\" afterDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/run_all.sh\" beforeDir=\"false\" afterPath=\"$PROJECT_DIR$/run_all.sh\" afterDir=\"false\" />\r\n    </list>\r\n    <option name=\"SHOW_DIALOG\" value=\"false\" />\r\n    <option name=\"HIGHLIGHT_CONFLICTS\" value=\"true\" />\r\n    <option name=\"HIGHLIGHT_NON_ACTIVE_CHANGELIST\" value=\"false\" />\r\n    <option name=\"LAST_RESOLUTION\" value=\"IGNORE\" />\r\n  </component>\r\n  <component name=\"Git.Settings\">\r\n    <option name=\"RECENT_GIT_ROOT_PATH\" value=\"$PROJECT_DIR$\" />\r\n  </component>\r\n  <component name=\"GitHubPullRequestSearchHistory\">{\r\n  &quot;lastFilter&quot;: {\r\n    &quot;state&quot;: &quot;OPEN&quot;,\r\n    &quot;assignee&quot;: &quot;manfreDATA&quot;\r\n  }\r\n}</component>\r\n  <component name=\"GithubPullRequestsUISettings\">{\r\n  &quot;selectedUrlAndAccountId&quot;: {\r\n    &quot;url&quot;: &quot;https://github.com/manfreDATA/sigo-superset.git&quot;,\r\n    &quot;accountId&quot;: &quot;348e87ec-b095-481f-a095-c6364dcb12bd&quot;\r\n  }\r\n}</component>\r\n  <component name=\"ProjectColorInfo\">{\r\n  &quot;customColor&quot;: &quot;&quot;,\r\n  &quot;associatedIndex&quot;: 5\r\n}</component>\r\n  <component name=\"ProjectId\" id=\"32nM39sGN3uD4eWPpnZ8Kp2TFP2\" />\r\n  <component name=\"ProjectViewState\">\r\n    <option name=\"hideEmptyMiddlePackages\" value=\"true\" />\r\n    <option name=\"showLibraryContents\" value=\"true\" />\r\n  </component>\r\n  <component name=\"PropertiesComponent\"><![CDATA[{\r\n  \"keyToString\": {\r\n    \"ASKED_SHARE_PROJECT_CONFIGURATION_FILES\": \"true\",\r\n    \"RunOnceActivity.ShowReadmeOnStart\": \"true\",\r\n    \"RunOnceActivity.git.unshallow\": \"true\",\r\n    \"SHELLCHECK.PATH\": \"C:\\\\Users\\\\Admin\\\\AppData\\\\Roaming\\\\JetBrains\\\\PyCharm2025.2\\\\plugins\\\\Shell Script\\\\shellcheck.exe\",\r\n    \"git-widget-placeholder\": \"master\",\r\n    \"last_opened_file_path\": \"C:/Users/Admin/AppData/Roaming/JetBrains/PyCharm2025.2/scratches\",\r\n    \"node.js.detected.package.eslint\": \"true\",\r\n    \"node.js.detected.package.tslint\": \"true\",\r\n    \"node.js.selected.package.eslint\": \"(autodetect)\",\r\n    \"node.js.selected.package.tslint\": \"(autodetect)\",\r\n    \"nodejs_package_manager_path\": \"npm\",\r\n    \"two.files.diff.last.used.file\": \"S:/CODE/sigo-echarts/config/docker-compose-non-dev.override.yml\",\r\n    \"vue.rearranger.settings.migration\": \"true\"\r\n  }\r\n}]]></component>\r\n  <component name=\"RecentsManager\">\r\n    <key name=\"CopyFile.RECENT_KEYS\">\r\n      <recent name=\"C:\\Users\\Admin\\AppData\\Roaming\\JetBrains\\PyCharm2025.2\\scratches\" />\r\n    </key>\r\n  </component>\r\n  <component name=\"SharedIndexes\">\r\n    <attachedChunks>\r\n      <set>\r\n        <option value=\"bundled-js-predefined-d6986cc7102b-e03c56caf84a-JavaScript-PY-252.23892.439\" />\r\n        <option value=\"bundled-python-sdk-b3ae9b5d7125-f0eec537fc84-com.jetbrains.pycharm.pro.sharedIndexes.bundled-PY-252.23892.439\" />\r\n      </set>\r\n    </attachedChunks>\r\n  </component>\r\n  <component name=\"TaskManager\">\r\n    <task active=\"true\" id=\"Default\" summary=\"Default task\">\r\n      <changelist id=\"6e664c11-39a0-483a-a12d-cf7922f58682\" name=\"Changes\" comment=\"\" />\r\n      <created>1758051681230</created>\r\n      <option name=\"number\" value=\"Default\" />\r\n      <option name=\"presentableId\" value=\"Default\" />\r\n      <updated>1758051681230</updated>\r\n      <workItem from=\"1758051682428\" duration=\"6060000\" />\r\n      <workItem from=\"1758119586478\" duration=\"8777000\" />\r\n      <workItem from=\"1758144170722\" duration=\"4606000\" />\r\n    </task>\r\n    <task id=\"LOCAL-00001\" summary=\"enforce react 17 for superset compatibility\">\r\n      <option name=\"closed\" value=\"true\" />\r\n      <created>1758055162995</created>\r\n      <option name=\"number\" value=\"00001\" />\r\n      <option name=\"presentableId\" value=\"LOCAL-00001\" />\r\n      <option name=\"project\" value=\"LOCAL\" />\r\n      <updated>1758055162995</updated>\r\n    </task>\r\n    <task id=\"LOCAL-00002\" summary=\"enforce react 17 again\">\r\n      <option name=\"closed\" value=\"true\" />\r\n      <created>1758056920132</created>\r\n      <option name=\"number\" value=\"00002\" />\r\n      <option name=\"presentableId\" value=\"LOCAL-00002\" />\r\n      <option name=\"project\" value=\"LOCAL\" />\r\n      <updated>1758056920132</updated>\r\n    </task>\r\n    <task id=\"LOCAL-00003\" summary=\"enforce react 17 without overrides\">\r\n      <option name=\"closed\" value=\"true\" />\r\n      <created>1758058524109</created>\r\n      <option name=\"number\" value=\"00003\" />\r\n      <option name=\"presentableId\" value=\"LOCAL-00003\" />\r\n      <option name=\"project\" value=\"LOCAL\" />\r\n      <updated>1758058524109</updated>\r\n    </task>\r\n    <task id=\"LOCAL-00004\" summary=\"enforce react 17 with fixes\">\r\n      <option name=\"closed\" value=\"true\" />\r\n      <created>1758059877513</created>\r\n      <option name=\"number\" value=\"00004\" />\r\n      <option name=\"presentableId\" value=\"LOCAL-00004\" />\r\n      <option name=\"project\" value=\"LOCAL\" />\r\n      <updated>1758059877513</updated>\r\n    </task>\r\n    <task id=\"LOCAL-00005\" summary=\"fix plugin build thumbnail png-loading errors\">\r\n      <option name=\"closed\" value=\"true\" />\r\n      <created>1758120192441</created>\r\n      <option name=\"number\" value=\"00005\" />\r\n      <option name=\"presentableId\" value=\"LOCAL-00005\" />\r\n      <option name=\"project\" value=\"LOCAL\" />\r\n      <updated>1758120192441</updated>\r\n    </task>\r\n    <task id=\"LOCAL-00006\" summary=\"fix plugin build Behavior.InteractiveChart error\">\r\n      <option name=\"closed\" value=\"true\" />\r\n      <created>1758121108948</created>\r\n      <option name=\"number\" value=\"00006\" />\r\n      <option name=\"presentableId\" value=\"LOCAL-00006\" />\r\n      <option name=\"project\" value=\"LOCAL\" />\r\n      <updated>1758121108948</updated>\r\n    </task>\r\n    <task id=\"LOCAL-00007\" summary=\"scripts/04_create_plugin.sh completo y actualizado con:&#10;&#10;EchartBase.tsx usando EChartsCoreOption (opción A, build modular de ECharts).&#10;matrixMiniBarGeo/Chart.tsx con dynamic import (sin require), para que no dependas de símbolos de Node.&#10;Resto de mejoras que ya teníamos: thumbnails PNG “oficiales” + fallbacks SVG, images.d.ts, Behavior.InteractiveChart, y build/instalación sin recalcular peers.\">\r\n      <option name=\"closed\" value=\"true\" />\r\n      <created>1758125526620</created>\r\n      <option name=\"number\" value=\"00007\" />\r\n      <option name=\"presentableId\" value=\"LOCAL-00007\" />\r\n      <option name=\"project\" value=\"LOCAL\" />\r\n      <updated>1758125526620</updated>\r\n    </task>\r\n    <task id=\"LOCAL-00008\" summary=\"Se reutiliza la legendSection que el propio plugin expone (incluye show_legend, legendType, legendOrientation, legendMargin con su lógica de visibilidad), tal como está en plugin-chart-echarts/src/controls.tsx del repo oficial\">\r\n      <option name=\"closed\" value=\"true\" />\r\n      <created>1758131748995</created>\r\n      <option name=\"number\" value=\"00008\" />\r\n      <option name=\"presentableId\" value=\"LOCAL-00008\" />\r\n      <option name=\"project\" value=\"LOCAL\" />\r\n      <updated>1758131748995</updated>\r\n    </task>\r\n    <task id=\"LOCAL-00009\" summary=\"Se elimina el fallbackThumb de los iconos de los plugins\">\r\n      <option name=\"closed\" value=\"true\" />\r\n      <created>1758138589289</created>\r\n      <option name=\"number\" value=\"00009\" />\r\n      <option name=\"presentableId\" value=\"LOCAL-00009\" />\r\n      <option name=\"project\" value=\"LOCAL\" />\r\n      <updated>1758138589289</updated>\r\n    </task>\r\n    <task id=\"LOCAL-00010\" summary=\"evita choques de tipos al no forzar ControlPanelConfig y exportar como any, pero mantiene la reutilización de sharedControls y de la legendSection oficial (scroll/plain, orientación, margen, show legend).\">\r\n      <option name=\"closed\" value=\"true\" />\r\n      <created>1758139793995</created>\r\n      <option name=\"number\" value=\"00010\" />\r\n      <option name=\"presentableId\" value=\"LOCAL-00010\" />\r\n      <option name=\"project\" value=\"LOCAL\" />\r\n      <updated>1758139793995</updated>\r\n    </task>\r\n    <task id=\"LOCAL-00011\" summary=\"reescribe las $referencias de overrides a versiones explícitas leyendo la versión real desde las dependencias raíz del package.json de superset-frontend\">\r\n      <option name=\"closed\" value=\"true\" />\r\n      <created>1758140698598</created>\r\n      <option name=\"number\" value=\"00011\" />\r\n      <option name=\"presentableId\" value=\"LOCAL-00011\" />\r\n      <option name=\"project\" value=\"LOCAL\" />\r\n      <updated>1758140698598</updated>\r\n    </task>\r\n    <task id=\"LOCAL-00012\" summary=\"pasar el código a Node con here‑doc literal (&lt;&lt;'NODE') y usar una variable de entorno para transferir la ruta del package.json.\">\r\n      <option name=\"closed\" value=\"true\" />\r\n      <created>1758141182616</created>\r\n      <option name=\"number\" value=\"00012\" />\r\n      <option name=\"presentableId\" value=\"LOCAL-00012\" />\r\n      <option name=\"project\" value=\"LOCAL\" />\r\n      <updated>1758141182616</updated>\r\n    </task>\r\n    <task id=\"LOCAL-00013\" summary=\"package-lock override\">\r\n      <option name=\"closed\" value=\"true\" />\r\n      <created>1758142868041</created>\r\n      <option name=\"number\" value=\"00013\" />\r\n      <option name=\"presentableId\" value=\"LOCAL-00013\" />\r\n      <option name=\"project\" value=\"LOCAL\" />\r\n      <updated>1758142868041</updated>\r\n    </task>\r\n    <task id=\"LOCAL-00014\" summary=\"docker compose script update\">\r\n      <option name=\"closed\" value=\"true\" />\r\n      <created>1758190887974</created>\r\n      <option name=\"number\" value=\"00014\" />\r\n      <option name=\"presentableId\" value=\"LOCAL-00014\" />\r\n      <option name=\"project\" value=\"LOCAL\" />\r\n      <updated>1758190887974</updated>\r\n    </task>\r\n    <task id=\"LOCAL-00015\" summary=\"fix package.json and lockfile version fix\">\r\n      <option name=\"closed\" value=\"true\" />\r\n      <created>1758192505252</created>\r\n      <option name=\"number\" value=\"00015\" />\r\n      <option name=\"presentableId\" value=\"LOCAL-00015\" />\r\n      <option name=\"project\" value=\"LOCAL\" />\r\n      <updated>1758192505252</updated>\r\n    </task>\r\n    <task id=\"LOCAL-00016\" summary=\"fix package.json and lockfile version fix_try 2\">\r\n      <option name=\"closed\" value=\"true\" />\r\n      <created>1758193873016</created>\r\n      <option name=\"number\" value=\"00016\" />\r\n      <option name=\"presentableId\" value=\"LOCAL-00016\" />\r\n      <option name=\"project\" value=\"LOCAL\" />\r\n      <updated>1758193873016</updated>\r\n    </task>\r\n    <option name=\"localTasksCounter\" value=\"17\" />\r\n    <servers />\r\n  </component>\r\n  <component name=\"TypeScriptGeneratedFilesManager\">\r\n    <option name=\"version\" value=\"3\" />\r\n  </component>\r\n  <component name=\"Vcs.Log.Tabs.Properties\">\r\n    <option name=\"TAB_STATES\">\r\n      <map>\r\n        <entry key=\"MAIN\">\r\n          <value>\r\n            <State />\r\n          </value>\r\n        </entry>\r\n      </map>\r\n    </option>\r\n  </component>\r\n  <component name=\"VcsManagerConfiguration\">\r\n    <MESSAGE value=\"enforce react 17 for superset compatibility\" />\r\n    <MESSAGE value=\"enforce react 17 again\" />\r\n    <MESSAGE value=\"enforce react 17 without overrides\" />\r\n    <MESSAGE value=\"enforce react 17 with fixes\" />\r\n    <MESSAGE value=\"fix plugin build thumbnail png-loading errors\" />\r\n    <MESSAGE value=\"fix plugin build Behavior.InteractiveChart error\" />\r\n    <MESSAGE value=\"scripts/04_create_plugin.sh completo y actualizado con:&#10;&#10;EchartBase.tsx usando EChartsCoreOption (opción A, build modular de ECharts).&#10;matrixMiniBarGeo/Chart.tsx con dynamic import (sin require), para que no dependas de símbolos de Node.&#10;Resto de mejoras que ya teníamos: thumbnails PNG “oficiales” + fallbacks SVG, images.d.ts, Behavior.InteractiveChart, y build/instalación sin recalcular peers.\" />\r\n    <MESSAGE value=\"Se reutiliza la legendSection que el propio plugin expone (incluye show_legend, legendType, legendOrientation, legendMargin con su lógica de visibilidad), tal como está en plugin-chart-echarts/src/controls.tsx del repo oficial\" />\r\n    <MESSAGE value=\"Se elimina el fallbackThumb de los iconos de los plugins\" />\r\n    <MESSAGE value=\"evita choques de tipos al no forzar ControlPanelConfig y exportar como any, pero mantiene la reutilización de sharedControls y de la legendSection oficial (scroll/plain, orientación, margen, show legend).\" />\r\n    <MESSAGE value=\"reescribe las $referencias de overrides a versiones explícitas leyendo la versión real desde las dependencias raíz del package.json de superset-frontend\" />\r\n    <MESSAGE value=\"pasar el código a Node con here‑doc literal (&lt;&lt;'NODE') y usar una variable de entorno para transferir la ruta del package.json.\" />\r\n    <MESSAGE value=\"package-lock override\" />\r\n    <MESSAGE value=\"docker compose script update\" />\r\n    <MESSAGE value=\"fix package.json and lockfile version fix\" />\r\n    <MESSAGE value=\"fix package.json and lockfile version fix_try 2\" />\r\n    <option name=\"LAST_COMMIT_MESSAGE\" value=\"fix package.json and lockfile version fix_try 2\" />\r\n  </component>\r\n</project>
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/workspace.xml b/.idea/workspace.xml
+--- a/.idea/workspace.xml	(revision d970ac1cc52799565e530bc10a03b51184292c22)
++++ b/.idea/workspace.xml	(date 1758427729765)
+@@ -4,9 +4,8 @@
+     <option name="autoReloadType" value="SELECTIVE" />
+   </component>
+   <component name="ChangeListManager">
+-    <list default="true" id="6e664c11-39a0-483a-a12d-cf7922f58682" name="Changes" comment="fix package.json and lockfile version fix_try 2">
++    <list default="true" id="6e664c11-39a0-483a-a12d-cf7922f58682" name="Changes" comment="no cargaba el .env">
+       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+-      <change beforePath="$PROJECT_DIR$/run_all.sh" beforeDir="false" afterPath="$PROJECT_DIR$/run_all.sh" afterDir="false" />
+     </list>
+     <option name="SHOW_DIALOG" value="false" />
+     <option name="HIGHLIGHT_CONFLICTS" value="true" />
+@@ -41,6 +40,7 @@
+   "keyToString": {
+     "ASKED_SHARE_PROJECT_CONFIGURATION_FILES": "true",
+     "RunOnceActivity.ShowReadmeOnStart": "true",
++    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+     "RunOnceActivity.git.unshallow": "true",
+     "SHELLCHECK.PATH": "C:\\Users\\Admin\\AppData\\Roaming\\JetBrains\\PyCharm2025.2\\plugins\\Shell Script\\shellcheck.exe",
+     "git-widget-placeholder": "master",
+@@ -76,7 +76,7 @@
+       <updated>1758051681230</updated>
+       <workItem from="1758051682428" duration="6060000" />
+       <workItem from="1758119586478" duration="8777000" />
+-      <workItem from="1758144170722" duration="4606000" />
++      <workItem from="1758144170722" duration="9093000" />
+     </task>
+     <task id="LOCAL-00001" summary="enforce react 17 for superset compatibility">
+       <option name="closed" value="true" />
+@@ -206,7 +206,23 @@
+       <option name="project" value="LOCAL" />
+       <updated>1758193873016</updated>
+     </task>
+-    <option name="localTasksCounter" value="17" />
++    <task id="LOCAL-00017" summary="no cargaba el .env">
++      <option name="closed" value="true" />
++      <created>1758195266486</created>
++      <option name="number" value="00017" />
++      <option name="presentableId" value="LOCAL-00017" />
++      <option name="project" value="LOCAL" />
++      <updated>1758195266486</updated>
++    </task>
++    <task id="LOCAL-00018" summary="no cargaba el .env">
++      <option name="closed" value="true" />
++      <created>1758197650933</created>
++      <option name="number" value="00018" />
++      <option name="presentableId" value="LOCAL-00018" />
++      <option name="project" value="LOCAL" />
++      <updated>1758197650933</updated>
++    </task>
++    <option name="localTasksCounter" value="19" />
+     <servers />
+   </component>
+   <component name="TypeScriptGeneratedFilesManager">
+@@ -240,6 +256,7 @@
+     <MESSAGE value="docker compose script update" />
+     <MESSAGE value="fix package.json and lockfile version fix" />
+     <MESSAGE value="fix package.json and lockfile version fix_try 2" />
+-    <option name="LAST_COMMIT_MESSAGE" value="fix package.json and lockfile version fix_try 2" />
++    <MESSAGE value="no cargaba el .env" />
++    <option name="LAST_COMMIT_MESSAGE" value="no cargaba el .env" />
+   </component>
+ </project>
+\ No newline at end of file
+Index: config/docker-compose-non-dev.yml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/config/docker-compose-non-dev.yml b/config/docker-compose-non-dev.yml
+new file mode 100644
+--- /dev/null	(date 1758427729781)
++++ b/config/docker-compose-non-dev.yml	(date 1758427729781)
+@@ -0,0 +1,179 @@
++# config/docker-compose-non-dev.yml
++version: "3.9"
++
++name: ${COMPOSE_PROJECT_NAME:-sigo-superset}
++
++services:
++  postgres:
++    image: postgres:15-alpine
++    container_name: ${COMPOSE_PROJECT_NAME:-sigo-superset}-postgres
++    environment:
++      POSTGRES_DB: ${POSTGRES_DB:-superset}
++      POSTGRES_USER: ${POSTGRES_USER:-superset}
++      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-superset}
++      TZ: ${TZ:-UTC}
++    volumes:
++      - db_home:/var/lib/postgresql/data
++    healthcheck:
++      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
++      interval: 5s
++      timeout: 5s
++      retries: 20
++    restart: unless-stopped
++
++  redis:
++    image: redis:7-alpine
++    container_name: ${COMPOSE_PROJECT_NAME:-sigo-superset}-redis
++    command: [ "redis-server", "--appendonly", "yes" ]
++    healthcheck:
++      test: ["CMD", "redis-cli", "ping"]
++      interval: 5s
++      timeout: 3s
++      retries: 20
++    restart: unless-stopped
++
++  # Inicialización (migraciones + admin + init). Idempotente.
++  superset-init:
++    image: ${SUPERSET_IMAGE}:${SUPERSET_TAG}
++    container_name: ${COMPOSE_PROJECT_NAME:-sigo-superset}-init
++    environment:
++      SUPERSET_CONFIG_PATH: /app/pythonpath/superset-config-docker.py
++      SUPERSET_ENV: ${SUPERSET_ENV:-production}
++      SUPERSET_LOAD_EXAMPLES: ${SUPERSET_LOAD_EXAMPLES:-no}
++      SUPERSET_SECRET_KEY: ${SUPERSET_SECRET_KEY}
++      TZ: ${TZ:-UTC}
++      # DB
++      POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
++      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
++      POSTGRES_DB: ${POSTGRES_DB:-superset}
++      POSTGRES_USER: ${POSTGRES_USER:-superset}
++      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-superset}
++      # Redis
++      REDIS_HOST: ${REDIS_HOST:-redis}
++      REDIS_PORT: ${REDIS_PORT:-6379}
++      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
++      # Admin bootstrap
++      SUPERSET_ADMIN_USERNAME: ${SUPERSET_ADMIN_USERNAME:-admin}
++      SUPERSET_ADMIN_PASSWORD: ${SUPERSET_ADMIN_PASSWORD:-ChangeMe123!}
++      SUPERSET_ADMIN_EMAIL: ${SUPERSET_ADMIN_EMAIL:-admin@superset.local}
++    volumes:
++      - ./superset-config-docker.py:/app/pythonpath/superset-config-docker.py:ro
++      - superset_home:/app/superset_home
++    depends_on:
++      postgres:
++        condition: service_healthy
++      redis:
++        condition: service_healthy
++    entrypoint: ["/bin/bash", "-c"]
++    command: >
++      "
++      echo '===> Migrando base de datos';
++      superset db upgrade &&
++      if [ \"${SUPERSET_LOAD_EXAMPLES}\" = \"yes\" ]; then
++        echo '===> Cargando ejemplos';
++        superset load_examples || true;
++      fi &&
++      echo '===> Creando usuario admin (idempotente)';
++      superset fab create-admin
++        --username \"$${SUPERSET_ADMIN_USERNAME}\"
++        --password \"$${SUPERSET_ADMIN_PASSWORD}\"
++        --firstname Superset
++        --lastname Admin
++        --email \"$${SUPERSET_ADMIN_EMAIL}\" || true &&
++      echo '===> Inicializando app';
++      superset init
++      "
++    restart: "no"
++
++  superset:
++    image: ${SUPERSET_IMAGE}:${SUPERSET_TAG}
++    container_name: ${COMPOSE_PROJECT_NAME:-sigo-superset}-superset
++    ports:
++      - "${HOST_PORT:-8088}:8088"
++    environment:
++      SUPERSET_CONFIG_PATH: /app/pythonpath/superset-config-docker.py
++      SUPERSET_ENV: ${SUPERSET_ENV:-production}
++      SUPERSET_SECRET_KEY: ${SUPERSET_SECRET_KEY}
++      TZ: ${TZ:-UTC}
++      # DB/Redis para que los lea superset-config-docker.py
++      POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
++      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
++      POSTGRES_DB: ${POSTGRES_DB:-superset}
++      POSTGRES_USER: ${POSTGRES_USER:-superset}
++      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-superset}
++      REDIS_HOST: ${REDIS_HOST:-redis}
++      REDIS_PORT: ${REDIS_PORT:-6379}
++      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
++    volumes:
++      - ./superset-config-docker.py:/app/pythonpath/superset-config-docker.py:ro
++      - superset_home:/app/superset_home
++    depends_on:
++      postgres:
++        condition: service_healthy
++      redis:
++        condition: service_healthy
++      superset-init:
++        condition: service_completed_successfully
++    healthcheck:
++      test: ["CMD-SHELL", "curl -fsS http://localhost:8088/health || exit 1"]
++      interval: 10s
++      timeout: 5s
++      retries: 30
++    restart: unless-stopped
++
++  superset-worker:
++    image: ${SUPERSET_IMAGE}:${SUPERSET_TAG}
++    container_name: ${COMPOSE_PROJECT_NAME:-sigo-superset}-worker
++    environment:
++      SUPERSET_CONFIG_PATH: /app/pythonpath/superset-config-docker.py
++      SUPERSET_SECRET_KEY: ${SUPERSET_SECRET_KEY}
++      TZ: ${TZ:-UTC}
++      POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
++      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
++      POSTGRES_DB: ${POSTGRES_DB:-superset}
++      POSTGRES_USER: ${POSTGRES_USER:-superset}
++      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-superset}
++      REDIS_HOST: ${REDIS_HOST:-redis}
++      REDIS_PORT: ${REDIS_PORT:-6379}
++      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
++    volumes:
++      - ./superset-config-docker.py:/app/pythonpath/superset-config-docker.py:ro
++      - superset_home:/app/superset_home
++    depends_on:
++      redis:
++        condition: service_healthy
++      superset:
++        condition: service_started
++    command: [ "celery", "-A", "superset.tasks.celery_app:app", "worker", "-O", "fair", "-l", "INFO" ]
++    restart: unless-stopped
++
++  superset-worker-beat:
++    image: ${SUPERSET_IMAGE}:${SUPERSET_TAG}
++    container_name: ${COMPOSE_PROJECT_NAME:-sigo-superset}-worker-beat
++    environment:
++      SUPERSET_CONFIG_PATH: /app/pythonpath/superset-config-docker.py
++      SUPERSET_SECRET_KEY: ${SUPERSET_SECRET_KEY}
++      TZ: ${TZ:-UTC}
++      POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
++      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
++      POSTGRES_DB: ${POSTGRES_DB:-superset}
++      POSTGRES_USER: ${POSTGRES_USER:-superset}
++      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-superset}
++      REDIS_HOST: ${REDIS_HOST:-redis}
++      REDIS_PORT: ${REDIS_PORT:-6379}
++      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
++    volumes:
++      - ./superset-config-docker.py:/app/pythonpath/superset-config-docker.py:ro
++      - superset_home:/app/superset_home
++    depends_on:
++      redis:
++        condition: service_healthy
++      superset:
++        condition: service_started
++    command: [ "celery", "-A", "superset.tasks.celery_app:app", "beat", "-l", "INFO" ]
++    restart: unless-stopped
++
++volumes:
++  db_home:
++  superset_home:
++
+diff --git a/config/.env-local b/config/.env-local
+new file mode 100644
