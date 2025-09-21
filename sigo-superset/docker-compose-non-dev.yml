@@ -1,0 +1,37 @@
+version: '3.7'
+services:
+  superset:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        BUILD_SUPERSET_FRONT: ${BUILD_SUPERSET_FRONT}
+    env_file:
+      - .env-local
+    ports:
+      - "${SUPERSET_PORT:-8088}:8088"
+    depends_on:
+      - db
+      - redis
+    volumes:
+      - ./dashboards:/app/dashboards
+      - ./datasources:/app/datasources
+      - ./assets:/app/assets
+      - ./plugins:/app/plugins
+      - ./create_users.py:/app/create_users.py
+      - ./04_create_plugin.sh:/app/04_create_plugin.sh
+
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - superset_db_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:latest
+
+volumes:
+  superset_db_data:
