@@ -1,28 +1,34 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "${BASE_DIR}/scripts/lib.sh"
-require_root
+# Top-level runner: load config, copy files, build & run superset.
+# Accepts optional first argument indicating mode: "dev" or "non-dev" (default non-dev).
+#
+# Example:
+#  ./run_all.sh           # run non-dev (production-like) compose
+#  ./run_all.sh dev       # run dev compose
 
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
+SCRIPTS_DIR="${ROOT}/scripts"
 
-info "Cargando flags desde config/.env"
-set -a
-source "${BASE_DIR}/config/.env"
-set +a
+MODE="${1:-non-dev}"
 
-info "Cargando flags desde config/flags.env"
-set -a
-source "${BASE_DIR}/config/flags.env"
-set +a
+# Source config loader to ensure environment variables and defaults are present
+# shellcheck disable=SC1091
+. "${SCRIPTS_DIR}/00_load_config.sh"
 
-run_step "01_docker.sh"
-run_step "02_clone_superset.sh"
-run_step "03_node_npm.sh"
-run_step "03b_pin_react17.sh"
-run_step "04_create_plugin.sh"
-run_step "05_register_plugin.sh"
-run_step "06_configure_env.sh"
-run_step "07_build_and_run.sh"
+echo "run_all: mode=${MODE}"
+echo "run_all: ROOT=${ROOT}"
+echo "run_all: using SUPERSET_DIR=${SUPERSET_DIR}"
+echo "run_all: copying config files..."
+# run script 06 (copy)
+bash "${SCRIPTS_DIR}/06_copy_config_to_superset.sh"
 
-success "Pipeline completado. Visita http://localhost:${HOST_PORT} (usuario: ${SUPERSET_ADMIN_USERNAME}, ver config/.env)."
+echo "run_all: building & starting superset (mode=${MODE})..."
+if [ "${MODE}" = "dev" ] || [ "${MODE}" = "development" ]; then
+  bash "${SCRIPTS_DIR}/07_build_and_up_superset.sh" dev
+else
+  bash "${SCRIPTS_DIR}/07_build_and_up_superset.sh" non-dev
+fi
+
+echo "run_all: done."
