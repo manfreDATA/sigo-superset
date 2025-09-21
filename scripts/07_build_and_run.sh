@@ -4,9 +4,6 @@ set -Eeuo pipefail
 BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 source "${BASE_DIR}/scripts/lib.sh"
 
-detect_compose_cmd
-ensure_docker_running
-
 # Prepara args de compose (-f para cada archivo)
 IFS=',' read -r -a COMPOSE_FILES <<< "${DOCKER_COMPOSE_FILES:?Define DOCKER_COMPOSE_FILES}"
 COMPOSE_ARGS=()
