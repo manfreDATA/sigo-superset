@@ -22,6 +22,8 @@ if [ ! -d "${SUPERSET_DIR}" ]; then
   exit 3
 fi
 
+
+
 # Ensure destination directories exist
 mkdir -p "${DEST_ENV_DIR}"
 mkdir -p "${DEST_SUP_CONFIG_DIR}"

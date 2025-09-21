@@ -11,6 +11,8 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 SCRIPTS_DIR="${ROOT}/scripts"
 CONFIG_DIR="${ROOT}/config"
 
+
+
 # shellcheck disable=SC1091
 if [ -f "${SCRIPTS_DIR}/lib.sh" ]; then
   # Load helper library (run_step, info, success, require_root, etc.)
@@ -21,17 +23,28 @@ else
 fi
 
 require_root
-  # Fallback: source .env-local and export its variables
-if [ -f "${CONFIG_DIR}/.env-local" ]; then
-  info "Cargando flags desde ${CONFIG_DIR}/.env-local"
-  set -a
+
+
+# Prefer the canonical loader in scripts/ which exports and arranges all variables.
+if [ -f "${SCRIPTS_DIR}/00_load_config.sh" ]; then
+  info "Cargando configuración desde ${SCRIPTS_DIR}/00_load_config.sh"
   # shellcheck disable=SC1091
-  . "${CONFIG_DIR}/.env-local"
-  set +a
+  . "${SCRIPTS_DIR}/00_load_config.sh"
 else
-  echo "ERROR: No configuration found (expected ${CONFIG_DIR}/.env-local)." >&2
-  exit 1
+  if [ -f "${CONFIG_DIR}/.env-local" ]; then
+    info "Cargando flags desde ${CONFIG_DIR}/.env-local"
+    set -a
+    # shellcheck disable=SC1091
+    . "${CONFIG_DIR}/.env-local"
+    set +a
+  else
+    echo "ERROR: No configuration found (expected ${CONFIG_DIR}/.env-local)." >&2
+    exit 1
+  fi
 fi
+  # Fallback: source .env-local and export its variables
+
+
 
 # Run pipeline steps (use the same names as in your original script)
 run_step "01_docker.sh"
