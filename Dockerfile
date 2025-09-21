@@ -1,6 +1,6 @@
 FROM apache/superset:6.0.0rc1
 
-ARG BUILD_SUPERSET_FRONT=false
+ARG BUILD_SUPERSET_FRONT=true
 WORKDIR /app
 
 COPY dashboards/ dashboards/
@@ -14,7 +14,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 RUN chmod +x /app/04_create_plugin.sh && \
     SUPERSET_ROOT=/app \
-    BUILD_SUPERSET_FRONT=true \
     /app/04_create_plugin.sh
 
 CMD ["superset", "run", "-h", "0.0.0.0", "-p", "8088"]
