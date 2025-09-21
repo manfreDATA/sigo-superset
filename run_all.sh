@@ -21,24 +21,16 @@ else
 fi
 
 require_root
-
-# Prefer the canonical loader in scripts/ which exports and arranges all variables.
-if [ -f "${SCRIPTS_DIR}/00_load_config.sh" ]; then
-  info "Cargando configuración desde ${SCRIPTS_DIR}/00_load_config.sh"
+  # Fallback: source .env-local and export its variables
+if [ -f "${CONFIG_DIR}/.env-local" ]; then
+  info "Cargando flags desde ${CONFIG_DIR}/.env-local"
+  set -a
   # shellcheck disable=SC1091
-  . "${SCRIPTS_DIR}/00_load_config.sh"
+  . "${CONFIG_DIR}/.env-local"
+  set +a
 else
-  # Fallback: source flags.env and export its variables
-  if [ -f "${CONFIG_DIR}/.env-local" ]; then
-    info "Cargando flags desde ${CONFIG_DIR}/.env-local"
-    set -a
-    # shellcheck disable=SC1091
-    . "${CONFIG_DIR}/.env-local"
-    set +a
-  else
-    echo "ERROR: No configuration found (expected ${SCRIPTS_DIR}/00_load_config.sh or ${CONFIG_DIR}/.env-local)." >&2
-    exit 1
-  fi
+  echo "ERROR: No configuration found (expected ${CONFIG_DIR}/.env-local)." >&2
+  exit 1
 fi
 
 # Run pipeline steps (use the same names as in your original script)
@@ -51,4 +43,4 @@ run_step "05_register_plugin.sh"
 run_step "06_copy_config_to_superset.sh"
 run_step "07_build_and_up_superset.sh"
 
-success "Pipeline completado. Visita http://localhost:${HOST_PORT} (usuario: ${SUPERSET_ADMIN_USERNAME}, ver config/.env)."
+success "Pipeline completado. Visita http://localhost:${HOST_PORT} (usuario: ${SUPERSET_ADMIN_USERNAME}, ver config/.env-local)."
