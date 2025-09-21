@@ -19,7 +19,8 @@ MODE="${1:-${MODE:-non-dev}}"
 if [ "${MODE}" = "dev" ] || [ "${MODE}" = "development" ]; then
   COMPOSE_BASENAME="${COMPOSE_DEV}"
 else
-  COMPOSE_BASENAME="${COMPOSE_NONDEV}"i
+  COMPOSE_BASENAME="${COMPOSE_NONDEV}"
+  fi
 
 COMPOSE_PATH="${SUPERSET_DIR}/${COMPOSE_BASENAME}"
 
@@ -60,7 +61,7 @@ cd "${SUPERSET_DIR}"
 
 # Run compose with build to ensure images are rebuilt
 echo "Running: ${DOCKER_COMPOSE_CMD} -f ${COMPOSE_BASENAME} up -d --build"
-if ${DOCKER_COMPOSE_CMD} -f "${COMPOSE_BASENAME}" up --build; then
+if ${DOCKER_COMPOSE_CMD} -f "${COMPOSE_BASENAME}" up -d --build; then
   echo "Docker compose started successfully."
 else
   echo "ERROR: docker compose failed. Check the logs with: ${DOCKER_COMPOSE_CMD} -f ${COMPOSE_BASENAME} logs --tail=200" >&2
