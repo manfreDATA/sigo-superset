@@ -1,34 +1,54 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Top-level runner: load config, copy files, build & run superset.
-# Accepts optional first argument indicating mode: "dev" or "non-dev" (default non-dev).
-#
-# Example:
-#  ./run_all.sh           # run non-dev (production-like) compose
-#  ./run_all.sh dev       # run dev compose
+# Top-level runner adapted to the "variables and config" approach:
+# - loads scripts/lib.sh (provides run_step, info, success, require_root, ...)
+# - prefers scripts/00_load_config.sh to export/configure variables
+# - falls back to config/flags.env if loader is not present
+# - runs the numbered pipeline steps via run_step
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 SCRIPTS_DIR="${ROOT}/scripts"
+CONFIG_DIR="${ROOT}/config"
 
-MODE="${1:-non-dev}"
-
-# Source config loader to ensure environment variables and defaults are present
 # shellcheck disable=SC1091
-. "${SCRIPTS_DIR}/00_load_config.sh"
-
-echo "run_all: mode=${MODE}"
-echo "run_all: ROOT=${ROOT}"
-echo "run_all: using SUPERSET_DIR=${SUPERSET_DIR}"
-echo "run_all: copying config files..."
-# run script 06 (copy)
-bash "${SCRIPTS_DIR}/06_copy_config_to_superset.sh"
-
-echo "run_all: building & starting superset (mode=${MODE})..."
-if [ "${MODE}" = "dev" ] || [ "${MODE}" = "development" ]; then
-  bash "${SCRIPTS_DIR}/07_build_and_up_superset.sh" dev
+if [ -f "${SCRIPTS_DIR}/lib.sh" ]; then
+  # Load helper library (run_step, info, success, require_root, etc.)
+  . "${SCRIPTS_DIR}/lib.sh"
 else
-  bash "${SCRIPTS_DIR}/07_build_and_up_superset.sh" non-dev
+  echo "ERROR: ${SCRIPTS_DIR}/lib.sh not found. Aborting." >&2
+  exit 1
 fi
 
-echo "run_all: done."
+require_root
+
+# Prefer the canonical loader in scripts/ which exports and arranges all variables.
+if [ -f "${SCRIPTS_DIR}/00_load_config.sh" ]; then
+  info "Cargando configuración desde ${SCRIPTS_DIR}/00_load_config.sh"
+  # shellcheck disable=SC1091
+  . "${SCRIPTS_DIR}/00_load_config.sh"
+else
+  # Fallback: source flags.env and export its variables
+  if [ -f "${CONFIG_DIR}/.env-local" ]; then
+    info "Cargando flags desde ${CONFIG_DIR}/.env-local"
+    set -a
+    # shellcheck disable=SC1091
+    . "${CONFIG_DIR}/.env-local"
+    set +a
+  else
+    echo "ERROR: No configuration found (expected ${SCRIPTS_DIR}/00_load_config.sh or ${CONFIG_DIR}/.env-local)." >&2
+    exit 1
+  fi
+fi
+
+# Run pipeline steps (use the same names as in your original script)
+run_step "01_docker.sh"
+run_step "02_clone_superset.sh"
+run_step "03_node_npm.sh"
+run_step "03b_pin_react17.sh"
+run_step "04_create_plugin.sh"
+run_step "05_register_plugin.sh"
+run_step "06_copy_config_to_superset.sh"
+run_step "07_build_and_up_superset.sh"
+
+success "Pipeline completado. Visita http://localhost:${HOST_PORT} (usuario: ${SUPERSET_ADMIN_USERNAME}, ver config/.env)."
