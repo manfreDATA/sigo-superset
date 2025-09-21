@@ -1,45 +1,64 @@
 #!/usr/bin/env bash
 set -euo pipefail
-source "$(dirname "$0")/lib.sh"
-: "${SUPERSET_ROOT:?}"
-BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-cd "${SUPERSET_ROOT}"
+# Script 06
+# Copies specific files from config/ into the corresponding locations in the superset code tree.
+# - config/.env-local -> superset/docker/.env-local
+# - config/superset_config_docker.py -> superset/docker/pythonpath_dev/superset_config_docker.py
+# - config/docker-compose-non-dev.yml -> superset/docker-compose-non-dev.yml
 
-# Copia .env-local al root del repo (al nivel del compose)
-if [[ ! -f "${SUPERSET_ROOT}/.env" ]]; then
-  cp "${BASE_DIR}/config/.env" "${SUPERSET_ROOT}/.env"
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." >/dev/null 2>&1 && pwd)" || exit 1
+CONFIG_DIR="$ROOT_DIR/config"
+SUPERSET_DIR="$ROOT_DIR/superset"
+
+# Source filenames
+ENV_FILE=".env-local"
+SUP_CONFIG="superset_config_docker.py"
+COMPOSE_FILE="docker-compose-non-dev.yml"
+
+# Destinations
+DEST_ENV_DIR="$SUPERSET_DIR/docker"
+DEST_SUP_CONFIG_DIR="$SUPERSET_DIR/docker/pythonpath_dev"
+DEST_COMPOSE_DIR="$SUPERSET_DIR"
+
+echo "Starting script 06: copy specific config files into superset tree."
+
+# Basic checks
+if [ ! -d "$CONFIG_DIR" ]; then
+  echo "ERROR: config directory not found at $CONFIG_DIR" >&2
+  exit 2
 fi
 
-# Genera SECRET_KEY si placeholder
-if grep -q "__GENERATE_ME__" "${SUPERSET_ROOT}/.env"; then
-  SK=$(openssl rand -hex 32)
-  sed -i "s|SUPERSET_SECRET_KEY=__GENERATE_ME__|SUPERSET_SECRET_KEY=${SK}|g" "${SUPERSET_ROOT}/.env"
-  info "Generado SUPERSET_SECRET_KEY en .env"
+# Ensure superset dir exists
+if [ ! -d "$SUPERSET_DIR" ]; then
+  echo "ERROR: superset directory not found at $SUPERSET_DIR" >&2
+  exit 3
 fi
 
-# Crea directorio pythonpath_dev y copia superset_config_docker.py
-mkdir -p docker/pythonpath_dev
-cp -f "${BASE_DIR}/config/superset_config_docker.py" docker/pythonpath_dev/superset_config_docker.py
-
-# Drivers adicionales (PostgreSQL)
-mkdir -p docker
-if [[ -f "${BASE_DIR}/config/requirements-local.txt" ]]; then
-  cp -f "${BASE_DIR}/config/requirements-local.txt" docker/requirements-local.txt
-  info "Agregado driver de PostgreSQL (psycopg2-binary) en docker/requirements-local.txt"
+# Copy .env-local
+if [ -f "$CONFIG_DIR/$ENV_FILE" ]; then
+  mkdir -p "$DEST_ENV_DIR"
+  cp -f "$CONFIG_DIR/$ENV_FILE" "$DEST_ENV_DIR/$ENV_FILE"
+  echo "Copied $CONFIG_DIR/$ENV_FILE -> $DEST_ENV_DIR/$ENV_FILE"
+else
+  echo "WARNING: $CONFIG_DIR/$ENV_FILE not found, skipping copy of env file."
 fi
 
-# Copia override para non-dev
-cp -f "${BASE_DIR}/config/docker-compose-non-dev.override.yml" "${SUPERSET_ROOT}/docker-compose-non-dev.override.yml"
-
-# Refuerzo opcional: asegurar .npmrc en superset-frontend
-if [[ -f "${SUPERSET_ROOT}/superset-frontend/package.json" ]]; then
-  cat > "${SUPERSET_ROOT}/superset-frontend/.npmrc" <<'NPMRC'
-legacy-peer-deps=true
-audit=false
-fund=false
-NPMRC
+# Copy superset_config_docker.py
+if [ -f "$CONFIG_DIR/$SUP_CONFIG" ]; then
+  mkdir -p "$DEST_SUP_CONFIG_DIR"
+  cp -f "$CONFIG_DIR/$SUP_CONFIG" "$DEST_SUP_CONFIG_DIR/$SUP_CONFIG"
+  echo "Copied $CONFIG_DIR/$SUP_CONFIG -> $DEST_SUP_CONFIG_DIR/$SUP_CONFIG"
+else
+  echo "WARNING: $CONFIG_DIR/$SUP_CONFIG not found, skipping copy of superset_config_docker.py."
 fi
 
+# Copy docker-compose-non-dev.yml into superset root
+if [ -f "$CONFIG_DIR/$COMPOSE_FILE" ]; then
+  cp -f "$CONFIG_DIR/$COMPOSE_FILE" "$DEST_COMPOSE_DIR/$COMPOSE_FILE"
+  echo "Copied $CONFIG_DIR/$COMPOSE_FILE -> $DEST_COMPOSE_DIR/$COMPOSE_FILE"
+else
+  echo "WARNING: $CONFIG_DIR/$COMPOSE_FILE not found, skipping copy of docker-compose file."
+fi
 
-success "Archivos de configuración listos (.env, superset_config_docker.py, requirements-local.txt, override compose)."
+echo "Script 06 completed."
