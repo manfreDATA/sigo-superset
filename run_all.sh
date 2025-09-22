@@ -49,7 +49,7 @@ fi
 # Run pipeline steps (use the same names as in your original script)
 run_step "01_docker.sh"
 run_step "02_clone_superset.sh"
-run_step "02b_build_superset.sh"
+#run_step "02b_build_superset.sh"
 run_step "03_node_npm.sh"
 run_step "03b_pin_react17.sh"
 run_step "04_create_plugin.sh"
