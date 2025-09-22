@@ -49,7 +49,7 @@ SUPERSET_DIR="/root/superset"
 ENV_FILE=".env-local"
 SUP_CONFIG="superset_config_docker.py"
 COMPOSE_NONDEV="docker-compose-non-dev.yml"
-COMPOSE_DEV="docker-compose.yml"
+COMPOSE_DEV="docker-compose-dev.yml"
 
   # Targets inside the superset tree
 DEST_ENV_DIR="${SUPERSET_DIR}/docker"
