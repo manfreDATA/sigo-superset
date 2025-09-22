@@ -629,7 +629,7 @@ NPMRC
 fi
 
 info "Instalando el plugin en superset-frontend (sin guardar en package.json)…"
-npm install --no-save ../plugins/superset-plugin-chart-echarts-extras \
+npm install --save ../plugins/plugin-chart-echarts-sigo \
   --legacy-peer-deps --no-audit --no-fund
 
 # Fijar versión mayor de ECharts si no está definida

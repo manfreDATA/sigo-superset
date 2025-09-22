@@ -14,6 +14,15 @@ set -euo pipefail
 # shellcheck disable=SC1091
 . "$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)/00_load_config.sh"
 
+SUPERSET_DIR="/root/superset"
+COMPOSE_NONDEV="docker-compose-non-dev.yml"
+COMPOSE_DEV="docker-compose-dev.yml"
+
+  # Targets inside the superset tree
+DEST_ENV_DIR="${SUPERSET_DIR}/docker"
+DEST_SUP_CONFIG_DIR="${SUPERSET_DIR}/docker/pythonpath_dev"
+DEST_COMPOSE_DIR="${SUPERSET_DIR}"
+
 
 # Ensure destination directories exist
 mkdir -p "${DEST_ENV_DIR}"

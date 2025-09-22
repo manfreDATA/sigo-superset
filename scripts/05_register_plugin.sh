@@ -9,7 +9,7 @@ cd "${SUPERSET_ROOT}/superset-frontend"
 node <<'NODE'
 const fs = require('fs'), p='src/visualizations/presets/MainPreset.js';
 let s = fs.readFileSync(p,'utf8');
-if(!s.includes("superset-plugin-chart-echarts-extras")){
+if(!s.includes("plugin-chart-echarts-sigo")){
   s = s.replace(/(^import .*\n)(?=export default)/m,
 `$1import {
   EchartsDatasetLinkPlugin,
@@ -17,7 +17,7 @@ if(!s.includes("superset-plugin-chart-echarts-extras")){
   EchartsBarYStackPlugin,
   EchartsBarNegativePlugin,
   EchartsMatrixMiniBarGeoPlugin,
-} from 'superset-plugin-chart-echarts-extras';
+} from 'plugin-chart-echarts-sigo';
 `);
   s = s.replace(/plugins:\s*\[/m, `plugins: [
     new EchartsDatasetLinkPlugin().configure({ key: 'echarts-dataset-link' }),
