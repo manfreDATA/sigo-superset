@@ -60,8 +60,8 @@ echo "Changing directory to ${SUPERSET_DIR}"
 cd "${SUPERSET_DIR}"
 
 # Run compose with build to ensure images are rebuilt
-echo "Running: ${DOCKER_COMPOSE_CMD} -f ${COMPOSE_BASENAME} up"
-if ${DOCKER_COMPOSE_CMD} -f "${COMPOSE_BASENAME}" up; then
+echo "Running: ${DOCKER_COMPOSE_CMD} -f ${COMPOSE_BASENAME} up --build"
+if ${DOCKER_COMPOSE_CMD} -f "${COMPOSE_BASENAME}" up --build; then
   echo "Docker compose started successfully."
 else
   echo "ERROR: docker compose failed. Check the logs with: ${DOCKER_COMPOSE_CMD} -f ${COMPOSE_BASENAME} logs --tail=200" >&2
