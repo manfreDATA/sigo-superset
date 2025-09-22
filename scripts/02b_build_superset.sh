@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Script 07
-# Builds and starts Superset using a chosen compose file.
+# Script 02b
+# Builds Superset using a chosen compose file.
 # Reads configuration from scripts/00_load_config.sh and uses COMPOSE_NONDEV / COMPOSE_DEV.
 #
 # Usage:
@@ -60,8 +60,8 @@ echo "Changing directory to ${SUPERSET_DIR}"
 cd "${SUPERSET_DIR}"
 
 # Run compose with build to ensure images are rebuilt
-echo "Running: ${DOCKER_COMPOSE_CMD} -f ${COMPOSE_BASENAME} up"
-if ${DOCKER_COMPOSE_CMD} -f "${COMPOSE_BASENAME}" up; then
+echo "Running: ${DOCKER_COMPOSE_CMD} -f ${COMPOSE_BASENAME} build"
+if ${DOCKER_COMPOSE_CMD} -f "${COMPOSE_BASENAME}" build; then
   echo "Docker compose started successfully."
 else
   echo "ERROR: docker compose failed. Check the logs with: ${DOCKER_COMPOSE_CMD} -f ${COMPOSE_BASENAME} logs --tail=200" >&2
