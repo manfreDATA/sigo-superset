@@ -14,6 +14,23 @@ set -euo pipefail
 # shellcheck disable=SC1091
 . "$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)/00_load_config.sh"
 
+
+# Ensure destination directories exist
+mkdir -p "${DEST_ENV_DIR}"
+mkdir -p "${DEST_SUP_CONFIG_DIR}"
+mkdir -p "${DEST_COMPOSE_DIR}"
+
+# Copy .env-local into /superset/docker/
+if [ -f "${CONFIG_DIR}/${ENV_FILE}" ]; then
+  cp -f "${CONFIG_DIR}/${ENV_FILE}" "${DEST_ENV_DIR}/${ENV_FILE}"
+  echo "Copied ${CONFIG_DIR}/${ENV_FILE} -> ${DEST_ENV_DIR}/${ENV_FILE}"
+else
+  echo "WARNING: ${CONFIG_DIR}/${ENV_FILE} not found, leaving the default config/.env-local in place. You may want to edit it."
+fi
+
+
+
+
 MODE="${1:-${MODE:-non-dev}}"
 
 if [ "${MODE}" = "dev" ] || [ "${MODE}" = "development" ]; then

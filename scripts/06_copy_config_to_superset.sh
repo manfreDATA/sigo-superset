@@ -29,14 +29,6 @@ mkdir -p "${DEST_ENV_DIR}"
 mkdir -p "${DEST_SUP_CONFIG_DIR}"
 mkdir -p "${DEST_COMPOSE_DIR}"
 
-# Copy .env-local
-if [ -f "${CONFIG_DIR}/${ENV_FILE}" ]; then
-  cp -f "${CONFIG_DIR}/${ENV_FILE}" "${DEST_ENV_DIR}/${ENV_FILE}"
-  echo "Copied ${CONFIG_DIR}/${ENV_FILE} -> ${DEST_ENV_DIR}/${ENV_FILE}"
-else
-  echo "WARNING: ${CONFIG_DIR}/${ENV_FILE} not found, leaving the default config/.env-local in place. You may want to edit it."
-fi
-
 # Copy superset_config_docker.py
 if [ -f "${CONFIG_DIR}/${SUP_CONFIG}" ]; then
   cp -f "${CONFIG_DIR}/${SUP_CONFIG}" "${DEST_SUP_CONFIG_DIR}/${SUP_CONFIG}"

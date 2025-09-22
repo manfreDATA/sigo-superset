@@ -2,6 +2,8 @@
 set -euo pipefail
 source "$(dirname "$0")/lib.sh"
 
+
+
 info "Instalando Docker Engine + Docker Compose plugin (repo oficial Docker)…"
 apt-get update -y
 apt-get install -y ca-certificates curl gnupg lsb-release
