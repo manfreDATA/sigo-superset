@@ -7,7 +7,7 @@ Este paquete despliega **Apache Superset 6.0.0rc1** en `/root/superset` usando D
 git clone https://github.com/manfreDATA/sigo-superset.git sigo-echarts
 cd /root/sigo-echarts
 sudo chmod +x run_all.sh scripts/*.sh
-sudo ./run_all.sh
+sudo ./run_all.sh 2>&1 | tee log.txt
 ```
 Luego visita: `http://localhost:8088` (credenciales en `config/.env`).
 
