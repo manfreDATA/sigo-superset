@@ -42,18 +42,6 @@ if [ ! -f "$CONFIG_FILE" ]; then
 # Defaults will be appended here by scripts if variables are missing.
 EOF
 fi
-
-ROOT_DIR=${ROOT_DIR}
-SUPERSET_DIR="/root/superset"
-SUP_CONFIG="superset_config_docker.py"
-COMPOSE_NONDEV="docker-compose-non-dev.yml"
-COMPOSE_DEV="docker-compose-dev.yml"
-
-  # Targets inside the superset tree
-DEST_ENV_DIR="${SUPERSET_DIR}/docker"
-DEST_SUP_CONFIG_DIR="${SUPERSET_DIR}/docker/pythonpath_dev"
-DEST_COMPOSE_DIR="${SUPERSET_DIR}"
-
 # Source existing config values into the environment (export while reading)
 # Use a subshell to avoid polluting caller if source fails; but we want variables exported.
 set -a
