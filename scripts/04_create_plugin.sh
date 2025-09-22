@@ -630,7 +630,7 @@ fi
 
 info "Instalando el plugin en superset-frontend (sin guardar en package.json)…"
 npm install ../plugins/plugin-chart-echarts-sigo \
-  --legacy-peer-deps --no-audit --no-fund
+  --save-dev --legacy-peer-deps --no-audit --no-fund
 
 # Fijar versión mayor de ECharts si no está definida
 node <<NODE
@@ -642,7 +642,7 @@ fs.writeFileSync(p, JSON.stringify(pkg,null,2));
 console.log('ℹ️ echarts =', pkg.dependencies.echarts);
 NODE
 
-npm install --no-audit --no-fund
+npm install --save-dev --no-audit --no-fund
 
 # ──────────────────────────────────────────────────────────────────────────────
 # 5) Verificación React 17
