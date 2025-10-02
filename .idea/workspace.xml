@@ -4,9 +4,19 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="6e664c11-39a0-483a-a12d-cf7922f58682" name="Changes" comment="no cargaba el .env">
+    <list default="true" id="6e664c11-39a0-483a-a12d-cf7922f58682" name="Changes" comment="package.json not generating">
+      <change afterPath="$PROJECT_DIR$/../sigo-bi/scripts/install-react-pivottable-plugin.sh" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../sigo-bi/scripts/setup_superset_docker.sh" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../sigo-bi/superset-frontend/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/../sigo-bi/superset-frontend/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../sigo-bi/superset-frontend/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/../sigo-bi/superset-frontend/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_revert_[Changes]/shelved.patch" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_revert_[Changes]1/shelved.patch" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_revert__Changes_.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_revert__Changes_1.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/scripts/07_build_and_run.sh" beforeDir="false" afterPath="$PROJECT_DIR$/scripts/07_build_and_run.sh" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/run_all.sh" beforeDir="false" afterPath="$PROJECT_DIR$/run_all.sh" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/scripts/04_create_plugin.sh" beforeDir="false" afterPath="$PROJECT_DIR$/scripts/04_create_plugin.sh" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -14,7 +24,13 @@
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
   <component name="Git.Settings">
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="dev_dockerfile" />
+      </map>
+    </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+    <option name="ROOT_SYNC" value="DONT_SYNC" />
   </component>
   <component name="GitHubPullRequestSearchHistory">{
   &quot;lastFilter&quot;: {
@@ -40,31 +56,66 @@
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
     "ASKED_SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "Python.setup.executor": "Run",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
     "RunOnceActivity.git.unshallow": "true",
     "SHELLCHECK.PATH": "C:\\Users\\Admin\\AppData\\Roaming\\JetBrains\\PyCharm2025.2\\plugins\\Shell Script\\shellcheck.exe",
     "git-widget-placeholder": "master",
-    "last_opened_file_path": "C:/Users/Admin/AppData/Roaming/JetBrains/PyCharm2025.2/scratches",
+    "last_opened_file_path": "S:/CODE/sigo-echarts",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
     "node.js.selected.package.tslint": "(autodetect)",
     "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "ml.llm.LLMThirdPartyAiProvidersConfigurable",
     "two.files.diff.last.used.file": "S:/CODE/sigo-echarts/config/docker-compose-non-dev.override.yml",
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="S:\CODE\sigo-echarts\scripts" />
       <recent name="C:\Users\Admin\AppData\Roaming\JetBrains\PyCharm2025.2\scratches" />
     </key>
+  </component>
+  <component name="RunManager" selected="Node.js.PivotTable.jsx">
+    <configuration name="PivotTable.jsx" type="NodeJSConfigurationType" temporary="true" nameIsGenerated="true" path-to-js-file="$PROJECT_DIR$/../sigo-bi/superset-frontend/plugins/plugin-chart-pivot-table/src/react-pivottable/PivotTable.jsx" working-dir="$PROJECT_DIR$/../sigo-bi/superset-frontend/plugins/plugin-chart-pivot-table/src/react-pivottable">
+      <method v="2" />
+    </configuration>
+    <configuration name="setup" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="sigo-bi" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/../sigo-bi" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/../sigo-bi/setup.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Node.js.PivotTable.jsx" />
+      </list>
+    </recent_temporary>
   </component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-js-predefined-d6986cc7102b-e03c56caf84a-JavaScript-PY-252.23892.439" />
-        <option value="bundled-python-sdk-b3ae9b5d7125-f0eec537fc84-com.jetbrains.pycharm.pro.sharedIndexes.bundled-PY-252.23892.439" />
+        <option value="bundled-js-predefined-d6986cc7102b-b598e85cdad2-JavaScript-WS-252.25557.126" />
       </set>
     </attachedChunks>
   </component>
@@ -78,6 +129,10 @@
       <workItem from="1758051682428" duration="6060000" />
       <workItem from="1758119586478" duration="8777000" />
       <workItem from="1758144170722" duration="7030000" />
+      <workItem from="1758499322611" duration="24328000" />
+      <workItem from="1758641011101" duration="452000" />
+      <workItem from="1758884995032" duration="2000" />
+      <workItem from="1759397729891" duration="2514000" />
     </task>
     <task id="LOCAL-00001" summary="enforce react 17 for superset compatibility">
       <option name="closed" value="true" />
@@ -215,11 +270,230 @@
       <option name="project" value="LOCAL" />
       <updated>1758195266486</updated>
     </task>
-    <option name="localTasksCounter" value="18" />
+    <task id="LOCAL-00018" summary="fixing main scripts">
+      <option name="closed" value="true" />
+      <created>1758447042645</created>
+      <option name="number" value="00018" />
+      <option name="presentableId" value="LOCAL-00018" />
+      <option name="project" value="LOCAL" />
+      <updated>1758447042645</updated>
+    </task>
+    <task id="LOCAL-00019" summary="fixing main scripts">
+      <option name="closed" value="true" />
+      <created>1758447389614</created>
+      <option name="number" value="00019" />
+      <option name="presentableId" value="LOCAL-00019" />
+      <option name="project" value="LOCAL" />
+      <updated>1758447389614</updated>
+    </task>
+    <task id="LOCAL-00020" summary="Merge remote-tracking branch 'origin/master'">
+      <option name="closed" value="true" />
+      <created>1758448647551</created>
+      <option name="number" value="00020" />
+      <option name="presentableId" value="LOCAL-00020" />
+      <option name="project" value="LOCAL" />
+      <updated>1758448647551</updated>
+    </task>
+    <task id="LOCAL-00021" summary="Merge remote-tracking branch 'origin/master'">
+      <option name="closed" value="true" />
+      <created>1758448741301</created>
+      <option name="number" value="00021" />
+      <option name="presentableId" value="LOCAL-00021" />
+      <option name="project" value="LOCAL" />
+      <updated>1758448741301</updated>
+    </task>
+    <task id="LOCAL-00022" summary="fix script 07">
+      <option name="closed" value="true" />
+      <created>1758448857532</created>
+      <option name="number" value="00022" />
+      <option name="presentableId" value="LOCAL-00022" />
+      <option name="project" value="LOCAL" />
+      <updated>1758448857532</updated>
+    </task>
+    <task id="LOCAL-00023" summary="fix script 00">
+      <option name="closed" value="true" />
+      <created>1758449381141</created>
+      <option name="number" value="00023" />
+      <option name="presentableId" value="LOCAL-00023" />
+      <option name="project" value="LOCAL" />
+      <updated>1758449381141</updated>
+    </task>
+    <task id="LOCAL-00024" summary="fix script compose and env folders">
+      <option name="closed" value="true" />
+      <created>1758450460620</created>
+      <option name="number" value="00024" />
+      <option name="presentableId" value="LOCAL-00024" />
+      <option name="project" value="LOCAL" />
+      <updated>1758450460620</updated>
+    </task>
+    <task id="LOCAL-00025" summary="fix docker image url">
+      <option name="closed" value="true" />
+      <created>1758450888603</created>
+      <option name="number" value="00025" />
+      <option name="presentableId" value="LOCAL-00025" />
+      <option name="project" value="LOCAL" />
+      <updated>1758450888603</updated>
+    </task>
+    <task id="LOCAL-00026" summary="Merge remote-tracking branch 'origin/master'">
+      <option name="closed" value="true" />
+      <created>1758451008349</created>
+      <option name="number" value="00026" />
+      <option name="presentableId" value="LOCAL-00026" />
+      <option name="project" value="LOCAL" />
+      <updated>1758451008349</updated>
+    </task>
+    <task id="LOCAL-00027" summary="branch for testing with dockerfile">
+      <option name="closed" value="true" />
+      <created>1758452425480</created>
+      <option name="number" value="00027" />
+      <option name="presentableId" value="LOCAL-00027" />
+      <option name="project" value="LOCAL" />
+      <updated>1758452425480</updated>
+    </task>
+    <task id="LOCAL-00028" summary="branch for testing with dockerfile">
+      <option name="closed" value="true" />
+      <created>1758453297021</created>
+      <option name="number" value="00028" />
+      <option name="presentableId" value="LOCAL-00028" />
+      <option name="project" value="LOCAL" />
+      <updated>1758453297021</updated>
+    </task>
+    <task id="LOCAL-00029" summary="branch for testing with dockerfile">
+      <option name="closed" value="true" />
+      <created>1758454471933</created>
+      <option name="number" value="00029" />
+      <option name="presentableId" value="LOCAL-00029" />
+      <option name="project" value="LOCAL" />
+      <updated>1758454471933</updated>
+    </task>
+    <task id="LOCAL-00030" summary="branch for testing with dockerfile">
+      <option name="closed" value="true" />
+      <created>1758454734803</created>
+      <option name="number" value="00030" />
+      <option name="presentableId" value="LOCAL-00030" />
+      <option name="project" value="LOCAL" />
+      <updated>1758454734803</updated>
+    </task>
+    <task id="LOCAL-00031" summary="fixing script">
+      <option name="closed" value="true" />
+      <created>1758455292558</created>
+      <option name="number" value="00031" />
+      <option name="presentableId" value="LOCAL-00031" />
+      <option name="project" value="LOCAL" />
+      <updated>1758455292558</updated>
+    </task>
+    <task id="LOCAL-00032" summary="building superset after cloning, then adding magic and finally only compose up (no rebuild)">
+      <option name="closed" value="true" />
+      <created>1758499720063</created>
+      <option name="number" value="00032" />
+      <option name="presentableId" value="LOCAL-00032" />
+      <option name="project" value="LOCAL" />
+      <updated>1758499720063</updated>
+    </task>
+    <task id="LOCAL-00033" summary="building superset after cloning, then adding magic and finally only compose up (no rebuild)">
+      <option name="closed" value="true" />
+      <created>1758500375678</created>
+      <option name="number" value="00033" />
+      <option name="presentableId" value="LOCAL-00033" />
+      <option name="project" value="LOCAL" />
+      <updated>1758500375678</updated>
+    </task>
+    <task id="LOCAL-00034" summary="setting flags">
+      <option name="closed" value="true" />
+      <created>1758526974023</created>
+      <option name="number" value="00034" />
+      <option name="presentableId" value="LOCAL-00034" />
+      <option name="project" value="LOCAL" />
+      <updated>1758526974024</updated>
+    </task>
+    <task id="LOCAL-00035" summary="setting flags">
+      <option name="closed" value="true" />
+      <created>1758527259660</created>
+      <option name="number" value="00035" />
+      <option name="presentableId" value="LOCAL-00035" />
+      <option name="project" value="LOCAL" />
+      <updated>1758527259660</updated>
+    </task>
+    <task id="LOCAL-00036" summary="fix .yml name change">
+      <option name="closed" value="true" />
+      <created>1758527686926</created>
+      <option name="number" value="00036" />
+      <option name="presentableId" value="LOCAL-00036" />
+      <option name="project" value="LOCAL" />
+      <updated>1758527686926</updated>
+    </task>
+    <task id="LOCAL-00037" summary="fix script build ordering and env using">
+      <option name="closed" value="true" />
+      <created>1758528536008</created>
+      <option name="number" value="00037" />
+      <option name="presentableId" value="LOCAL-00037" />
+      <option name="project" value="LOCAL" />
+      <updated>1758528536008</updated>
+    </task>
+    <task id="LOCAL-00038" summary="fix script build ordering and env using">
+      <option name="closed" value="true" />
+      <created>1758532412341</created>
+      <option name="number" value="00038" />
+      <option name="presentableId" value="LOCAL-00038" />
+      <option name="project" value="LOCAL" />
+      <updated>1758532412341</updated>
+    </task>
+    <task id="LOCAL-00039" summary="Merge remote-tracking branch 'origin/master'">
+      <option name="closed" value="true" />
+      <created>1758545161281</created>
+      <option name="number" value="00039" />
+      <option name="presentableId" value="LOCAL-00039" />
+      <option name="project" value="LOCAL" />
+      <updated>1758545161281</updated>
+    </task>
+    <task id="LOCAL-00040" summary="Merge remote-tracking branch 'origin/master'">
+      <option name="closed" value="true" />
+      <created>1758546181616</created>
+      <option name="number" value="00040" />
+      <option name="presentableId" value="LOCAL-00040" />
+      <option name="project" value="LOCAL" />
+      <updated>1758546181616</updated>
+    </task>
+    <task id="LOCAL-00041" summary="fixing config file loading">
+      <option name="closed" value="true" />
+      <created>1758561024911</created>
+      <option name="number" value="00041" />
+      <option name="presentableId" value="LOCAL-00041" />
+      <option name="project" value="LOCAL" />
+      <updated>1758561024911</updated>
+    </task>
+    <task id="LOCAL-00042" summary="fixing config file loading">
+      <option name="closed" value="true" />
+      <created>1758562635754</created>
+      <option name="number" value="00042" />
+      <option name="presentableId" value="LOCAL-00042" />
+      <option name="project" value="LOCAL" />
+      <updated>1758562635754</updated>
+    </task>
+    <task id="LOCAL-00043" summary="package.json not generating">
+      <option name="closed" value="true" />
+      <created>1758563291818</created>
+      <option name="number" value="00043" />
+      <option name="presentableId" value="LOCAL-00043" />
+      <option name="project" value="LOCAL" />
+      <updated>1758563291818</updated>
+    </task>
+    <task id="LOCAL-00044" summary="package.json not generating">
+      <option name="closed" value="true" />
+      <created>1758563479026</created>
+      <option name="number" value="00044" />
+      <option name="presentableId" value="LOCAL-00044" />
+      <option name="project" value="LOCAL" />
+      <updated>1758563479026</updated>
+    </task>
+    <option name="localTasksCounter" value="45" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
+  </component>
+  <component name="UnknownFeatures">
+    <option featureType="com.intellij.fileTypeFactory" implementationName="Makefile" />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
     <option name="TAB_STATES">
@@ -233,13 +507,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="enforce react 17 for superset compatibility" />
-    <MESSAGE value="enforce react 17 again" />
-    <MESSAGE value="enforce react 17 without overrides" />
-    <MESSAGE value="enforce react 17 with fixes" />
-    <MESSAGE value="fix plugin build thumbnail png-loading errors" />
-    <MESSAGE value="fix plugin build Behavior.InteractiveChart error" />
-    <MESSAGE value="scripts/04_create_plugin.sh completo y actualizado con:&#10;&#10;EchartBase.tsx usando EChartsCoreOption (opción A, build modular de ECharts).&#10;matrixMiniBarGeo/Chart.tsx con dynamic import (sin require), para que no dependas de símbolos de Node.&#10;Resto de mejoras que ya teníamos: thumbnails PNG “oficiales” + fallbacks SVG, images.d.ts, Behavior.InteractiveChart, y build/instalación sin recalcular peers." />
     <MESSAGE value="Se reutiliza la legendSection que el propio plugin expone (incluye show_legend, legendType, legendOrientation, legendMargin con su lógica de visibilidad), tal como está en plugin-chart-echarts/src/controls.tsx del repo oficial" />
     <MESSAGE value="Se elimina el fallbackThumb de los iconos de los plugins" />
     <MESSAGE value="evita choques de tipos al no forzar ControlPanelConfig y exportar como any, pero mantiene la reutilización de sharedControls y de la legendSection oficial (scroll/plain, orientación, margen, show legend)." />
@@ -250,6 +517,24 @@
     <MESSAGE value="fix package.json and lockfile version fix" />
     <MESSAGE value="fix package.json and lockfile version fix_try 2" />
     <MESSAGE value="no cargaba el .env" />
-    <option name="LAST_COMMIT_MESSAGE" value="no cargaba el .env" />
+    <MESSAGE value="fixing main scripts" />
+    <MESSAGE value="fix script 07" />
+    <MESSAGE value="fix script 00" />
+    <MESSAGE value="fix script compose and env folders" />
+    <MESSAGE value="fix docker image url" />
+    <MESSAGE value="branch for testing with dockerfile" />
+    <MESSAGE value="fixing script" />
+    <MESSAGE value="building superset after cloning, then adding magic and finally only compose up (no rebuild)" />
+    <MESSAGE value="setting flags" />
+    <MESSAGE value="fix .yml name change" />
+    <MESSAGE value="fix script build ordering and env using" />
+    <MESSAGE value="Merge remote-tracking branch 'origin/master'" />
+    <MESSAGE value="Merge remote-tracking branch 'origin/master'&#10;&#10;# Conflicts:&#10;#&#9;scripts/04_create_plugin.sh" />
+    <MESSAGE value="fixing config file loading" />
+    <MESSAGE value="package.json not generating" />
+    <option name="LAST_COMMIT_MESSAGE" value="package.json not generating" />
+  </component>
+  <component name="com.intellij.coverage.CoverageDataManagerImpl">
+    <SUITE FILE_PATH="coverage/sigo_echarts$setup.coverage" NAME="setup Coverage Results" MODIFIED="1758519802156" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/../sigo-bi" />
   </component>
 </project>

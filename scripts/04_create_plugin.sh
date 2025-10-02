@@ -57,14 +57,14 @@ SRC_TREEMAP="${SRC_ECHARTS_BASE}/Treemap/images"
 # 1) Skeleton del plugin (idempotente)
 # ──────────────────────────────────────────────────────────────────────────────
 info "Creando/actualizando skeleton del plugin…"
-PLUGIN_DIR="plugins/superset-plugin-chart-echarts-extras"
+PLUGIN_DIR="plugins/plugin-chart-echarts-sigo"
 SRC_DIR="${PLUGIN_DIR}/src"
 mkdir -p "${SRC_DIR}"/{shared,datasetLink,datasetSeriesLayoutBy,barYStack,barNegative,matrixMiniBarGeo}
 
 # package.json (incluye plugin-chart-echarts para importar legendSection)
 cat > "${PLUGIN_DIR}/package.json" <<'EOP'
 {
-  "name": "superset-plugin-chart-echarts-extras",
+  "name": "plugin-chart-echarts-sigo",
   "version": "0.1.0",
   "description": "ECharts extras for Apache Superset",
   "license": "Apache-2.0",
@@ -93,7 +93,6 @@ cat > "${PLUGIN_DIR}/package.json" <<'EOP'
   }
 }
 EOP
-
 # tsconfig
 cat > "${PLUGIN_DIR}/tsconfig.json" <<'JSON'
 {
@@ -631,6 +630,8 @@ fi
 info "Instalando el plugin en superset-frontend (sin guardar en package.json)…"
 npm install ../plugins/plugin-chart-echarts-sigo \
   --save-dev --legacy-peer-deps --no-audit --no-fund
+
+# ... existing code ...
 
 # Fijar versión mayor de ECharts si no está definida
 node <<NODE

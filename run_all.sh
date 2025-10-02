@@ -58,3 +58,43 @@ run_step "06_copy_config_to_superset.sh"
 run_step "07_build_and_up_superset.sh"
 
 success "Pipeline completado. Visita http://localhost:${HOST_PORT} (usuario: ${SUPERSET_ADMIN_USERNAME}, ver config/.env-local)."
+# ─────────────────────────────────────────────────────────────────────────────
+# 1) Skeleton del plugin (idempotente)
+# ─────────────────────────────────────────────────────────────────────────────
+info "Creando/actualizando skeleton del plugin…"
+PLUGIN_DIR="plugins/plugin-chart-echarts-sigo"
+SRC_DIR="${PLUGIN_DIR}/src"
+mkdir -p "${SRC_DIR}"/{shared,datasetLink,datasetSeriesLayoutBy,barYStack,barNegative,matrixMiniBarGeo}
+
+# package.json (incluye plugin-chart-echarts para importar legendSection)
+cat > "${PLUGIN_DIR}/package.json" <<'EOP'
+{
+  "name": "plugin-chart-echarts-sigo",
+  "version": "0.1.0",
+  "description": "ECharts extras for Apache Superset",
+  "license": "Apache-2.0",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsc -w -p tsconfig.json"
+  },
+  "peerDependencies": {
+    "@superset-ui/core": ">=0.20.0",
+    "@superset-ui/chart-controls": ">=0.20.0",
+    "react": ">=16.13.1 <18",
+    "react-dom": ">=16.13.1 <18",
+    "echarts": ">=5.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0",
+    "@types/react": "^17.0.0",
+    "@types/react-dom": "^17.0.0",
+    "@types/node": "^20.0.0",
+    "echarts": "^5.4.0",
+    "@superset-ui/core": "*",
+    "@superset-ui/chart-controls": "*",
+    "@superset-ui/plugin-chart-echarts": "*"
+  }
+}
+EOP

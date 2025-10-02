@@ -2,6 +2,16 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../sigo-bi" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../sigo-bi/.github/actions/cached-dependencies" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../sigo-bi/.github/actions/chart-releaser-action" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../sigo-bi/.github/actions/chart-testing-action" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../sigo-bi/.github/actions/comment-on-pr" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../sigo-bi/.github/actions/file-changes-action" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../sigo-bi/.github/actions/github-action-push-to-another-repository" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../sigo-bi/.github/actions/latest-tag" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../sigo-bi/.github/actions/pr-lint-action" vcs="Git" />
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../sigo-superset" vcs="Git" />
   </component>
 </project>
